@@ -73,6 +73,10 @@ rhierMnlRwMixture_rcpp_loop <- function(lgtdata, Z, deltabar, Ad, mubar, Amu, nu
     .Call('_bayesm_rhierMnlRwMixture_rcpp_loop', PACKAGE = 'bayesm', lgtdata, Z, deltabar, Ad, mubar, Amu, nu, V, s, R, keep, nprint, drawdelta, olddelta, a, oldprob, oldbetas, ind, SignRes)
 }
 
+rhierMnlRwMixture_slice_rcpp_loop <- function(lgtdata, Z, deltabar, Ad, mubar, Amu, nu, V, s, R, keep, nprint, drawdelta, olddelta, a, oldprob, oldbetas, ind, SignRes, p_MH) {
+    .Call('_bayesm_rhierMnlRwMixture_slice_rcpp_loop', PACKAGE = 'bayesm', lgtdata, Z, deltabar, Ad, mubar, Amu, nu, V, s, R, keep, nprint, drawdelta, olddelta, a, oldprob, oldbetas, ind, SignRes, p_MH)
+}
+
 rhierNegbinRw_rcpp_loop <- function(regdata, hessdata, Z, Beta, Delta, Deltabar, Adelta, nu, V, a, b, R, keep, sbeta, alphacroot, nprint, rootA, alpha, fixalpha) {
     .Call('_bayesm_rhierNegbinRw_rcpp_loop', PACKAGE = 'bayesm', regdata, hessdata, Z, Beta, Delta, Deltabar, Adelta, nu, V, a, b, R, keep, sbeta, alphacroot, nprint, rootA, alpha, fixalpha)
 }
