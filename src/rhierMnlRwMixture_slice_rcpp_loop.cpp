@@ -82,7 +82,13 @@ mnlMetropOnceOut mnlMetropOnce_con_MH(vec const &y, mat const &X, vec const &old
     vec betadraw, alphaminv;
 
     int stay = 0;
+
+
+    // Note trans(incroot) here
+    // The actual covariance is trans(incroot) * incroot = inv(H + Vb^{-1})
     vec betac = oldbeta + s * trans(incroot) * as<vec>(rnorm(X.n_cols));
+
+
     double cll = llmnl_con_MH(betac, y, X, SignRes);
     double clpost = cll + lndMvn(betac, betabar, rootpi);
     double ldiff = clpost - oldll - lndMvn(oldbeta, betabar, rootpi);
@@ -130,7 +136,7 @@ mnlMetropOnceOut ESS_draw_hierLogitMixture(vec const &y, mat const &X, vec const
 
     // draw the auxillary vector
     vec eps = arma::randn<vec>(L.n_cols);
-    vec nu = trans(L) * eps;
+    vec nu = L * eps;
 
     // compute the prior threshold
     double u = as_scalar(randu<vec>(1));
@@ -191,6 +197,9 @@ List rhierMnlRwMixture_slice_rcpp_loop(List const &lgtdata, mat const &Z,
                                        int R, int keep, int nprint, bool drawdelta,
                                        mat olddelta, vec const &a, vec oldprob, mat oldbetas, vec ind, vec const &SignRes, double p_MH)
 {
+    cout << "--------------------" << endl;
+    cout << "mixture of MH and slice sampler" << endl;
+    cout << "--------------------" << endl;
 
     // Wayne Taylor 10/01/2014
 
@@ -198,7 +207,7 @@ List rhierMnlRwMixture_slice_rcpp_loop(List const &lgtdata, mat const &Z,
     int nvar = V.n_cols;
     int nz = Z.n_cols;
 
-    mat rootpi, betabar, ucholinv, incroot;
+    mat rootpi, betabar, ucholinv, incroot, L;
     int mkeep;
     mnlMetropOnceOut metropout_struct;
     List lgtdatai, nmix;
@@ -257,6 +266,8 @@ List rhierMnlRwMixture_slice_rcpp_loop(List const &lgtdata, mat const &Z,
         for (int lgt = 0; lgt < nlgt; lgt++)
         {
             List oldcomplgt = oldcomp[ind[lgt] - 1];
+
+            // rooti * trans(rooti) = sigma^{-1}  !!! cholesky root of sigma Inverse
             rootpi = as<mat>(oldcomplgt[1]);
 
             //note: beta_i = Delta*z_i + u_i  Delta is nvar x nz
@@ -276,14 +287,22 @@ List rhierMnlRwMixture_slice_rcpp_loop(List const &lgtdata, mat const &Z,
             if (arma::randu<double>() < p_MH)
             {
                 //compute inc.root
+
+                // ucholinv * trans(ucholinv) = (H + Vb^{-1})^{-1}
                 ucholinv = solve(trimatu(chol(lgtdata_vector[lgt].hess + rootpi * trans(rootpi))), eye(nvar, nvar)); //trimatu interprets the matrix as upper triangular and makes solve more efficient
                 incroot = chol(ucholinv * trans(ucholinv));
 
+                // trans(incroot) * incroot = (H + Vb^{-1})^{-1}
                 metropout_struct = mnlMetropOnce_con_MH(lgtdata_vector[lgt].y, lgtdata_vector[lgt].X, vectorise(oldbetas(lgt, span::all)), oldll[lgt], s, incroot, betabar, rootpi, SignRes);
             }
             else
             {
-                metropout_struct = ESS_draw_hierLogitMixture(lgtdata_vector[lgt].y, lgtdata_vector[lgt].X, vectorise(oldbetas(lgt, span::all)), betabar, rootpi, oldll[lgt], SignRes);
+                // rootpi * trans(rootpi) = Sigma^{-1}
+                L = inv(rootpi * trans(rootpi));
+
+                // L * trans(L) = Sigma
+                L = chol(L, "lower");
+                metropout_struct = ESS_draw_hierLogitMixture(lgtdata_vector[lgt].y, lgtdata_vector[lgt].X, vectorise(oldbetas(lgt, span::all)), betabar, L, oldll[lgt], SignRes);
             }
 
             oldbetas(lgt, span::all) = trans(metropout_struct.betadraw);

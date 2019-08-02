@@ -821,7 +821,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_bayesm_rhierMnlDP_rcpp_loop", (DL_FUNC) &_bayesm_rhierMnlDP_rcpp_loop, 18},
     {"_bayesm_llmnl_con", (DL_FUNC) &_bayesm_llmnl_con, 4},
     {"_bayesm_rhierMnlRwMixture_rcpp_loop", (DL_FUNC) &_bayesm_rhierMnlRwMixture_rcpp_loop, 19},
-    {"_bayesm_rhierMnlRwMixture_slice_rcpp_loop", (DL_FUNC) &_bayesm_rhierMnlRwMixture_rcpp_loop, 20},
+    {"_bayesm_rhierMnlRwMixture_slice_rcpp_loop", (DL_FUNC) &_bayesm_rhierMnlRwMixture_slice_rcpp_loop, 20},
     {"_bayesm_rhierNegbinRw_rcpp_loop", (DL_FUNC) &_bayesm_rhierNegbinRw_rcpp_loop, 19},
     {"_bayesm_rivDP_rcpp_loop", (DL_FUNC) &_bayesm_rivDP_rcpp_loop, 23},
     {"_bayesm_rivGibbs_rcpp_loop", (DL_FUNC) &_bayesm_rivGibbs_rcpp_loop, 13},

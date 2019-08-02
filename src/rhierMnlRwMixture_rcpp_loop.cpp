@@ -117,6 +117,10 @@ List rhierMnlRwMixture_rcpp_loop(List const& lgtdata, mat const& Z,
 
 // Wayne Taylor 10/01/2014
 
+  cout << "--------------------" << endl;
+  cout << "Metropolis Hastings" << endl; 
+  cout << "--------------------" << endl;
+
   int nlgt = lgtdata.size();
   int nvar = V.n_cols;
   int nz = Z.n_cols;
@@ -183,7 +187,11 @@ List rhierMnlRwMixture_rcpp_loop(List const& lgtdata, mat const& Z,
         if (rep == 0) oldll[lgt] = llmnl_con(vectorise(oldbetas(lgt,span::all)),lgtdata_vector[lgt].y,lgtdata_vector[lgt].X,SignRes);
         
         //compute inc.root
+
+        // ucholinv * trans(ucholinv) = inv(H + Vb^{-1})
         ucholinv = solve(trimatu(chol(lgtdata_vector[lgt].hess+rootpi*trans(rootpi))), eye(nvar,nvar)); //trimatu interprets the matrix as upper triangular and makes solve more efficient
+
+        // t(incroot) * incroot = inv(H + Vb^{-1})
         incroot = chol(ucholinv*trans(ucholinv));
                 
         metropout_struct = mnlMetropOnce_con(lgtdata_vector[lgt].y,lgtdata_vector[lgt].X,vectorise(oldbetas(lgt,span::all)),

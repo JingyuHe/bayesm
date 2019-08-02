@@ -33,9 +33,12 @@ List drawCompsFromLabels(mat const& y,  mat const& Bbar,
       yk = y.rows(find(z==(k+1))); //Note k starts at 0 and z starts at 1
       Xk = ones(nobincomp[k], 1);
 
+      // just regress yk to 1 
       temp = rmultireg(yk, Xk, Bbar, A, nu, V);
       
       sigma = as<mat>(temp["Sigma"]); //conversion from Rcpp to Armadillo requires explict declaration of variable type using as<>
+
+      // rooti * trans(rooti) = sigma^{-1}  !!! cholesky root of sigma Inverse
       rooti = solve(trimatu(chol(sigma)),eye(sigma.n_rows,sigma.n_cols)); //trimatu interprets the matrix as upper triangular and makes solve more efficient
       
       mu = as<vec>(temp["B"]);
