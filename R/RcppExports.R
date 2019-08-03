@@ -61,6 +61,10 @@ rhierLinearModel_rcpp_loop <- function(regdata, Z, Deltabar, A, nu, V, nu_e, ssq
     .Call('_bayesm_rhierLinearModel_rcpp_loop', PACKAGE = 'bayesm', regdata, Z, Deltabar, A, nu, V, nu_e, ssq, tau, Delta, Vbeta, R, keep, nprint)
 }
 
+rhierLinearModel_slice_rcpp_loop <- function(regdata, Z, Deltabar, A, nu, V, nu_e, ssq, tau, Delta, Vbeta, R, keep, nprint) {
+    .Call('_bayesm_rhierLinearModel_slice_rcpp_loop', PACKAGE = 'bayesm', regdata, Z, Deltabar, A, nu, V, nu_e, ssq, tau, Delta, Vbeta, R, keep, nprint)
+}
+
 rhierMnlDP_rcpp_loop <- function(R, keep, nprint, lgtdata, Z, deltabar, Ad, PrioralphaList, lambda_hyper, drawdelta, nvar, oldbetas, s, maxuniq, gridsize, BayesmConstantA, BayesmConstantnuInc, BayesmConstantDPalpha) {
     .Call('_bayesm_rhierMnlDP_rcpp_loop', PACKAGE = 'bayesm', R, keep, nprint, lgtdata, Z, deltabar, Ad, PrioralphaList, lambda_hyper, drawdelta, nvar, oldbetas, s, maxuniq, gridsize, BayesmConstantA, BayesmConstantnuInc, BayesmConstantDPalpha)
 }

@@ -156,9 +156,12 @@ mnlMetropOnceOut ESS_draw_hierLogitMixture(vec const &y, mat const &X, vec const
 
     double compll;
 
-    compll = llmnl(betaprop + beta_hat, y, X);
+    compll = llmnl_con_MH(betaprop + beta_hat, y, X, SignRes);
+
     while (compll < ly)
     {
+        // count ++ ;
+
         if (thetaprop < 0)
         {
             thetamin = thetaprop;
@@ -173,7 +176,8 @@ mnlMetropOnceOut ESS_draw_hierLogitMixture(vec const &y, mat const &X, vec const
 
         betaprop = beta * cos(thetaprop) + nu * sin(thetaprop);
 
-        compll = llmnl(betaprop + beta_hat, y, X);
+        compll = llmnl_con_MH(betaprop + beta_hat, y, X, SignRes);
+
     }
 
     // accept the proposal
@@ -284,26 +288,26 @@ List rhierMnlRwMixture_slice_rcpp_loop(List const &lgtdata, mat const &Z,
             if (rep == 0)
                 oldll[lgt] = llmnl_con_MH(vectorise(oldbetas(lgt, span::all)), lgtdata_vector[lgt].y, lgtdata_vector[lgt].X, SignRes);
 
-            if (arma::randu<double>() < p_MH)
-            {
-                //compute inc.root
+            // if (arma::randu<double>() < p_MH)
+            // {
+            //     //compute inc.root
 
-                // ucholinv * trans(ucholinv) = (H + Vb^{-1})^{-1}
-                ucholinv = solve(trimatu(chol(lgtdata_vector[lgt].hess + rootpi * trans(rootpi))), eye(nvar, nvar)); //trimatu interprets the matrix as upper triangular and makes solve more efficient
-                incroot = chol(ucholinv * trans(ucholinv));
+            //     // ucholinv * trans(ucholinv) = (H + Vb^{-1})^{-1}
+            //     ucholinv = solve(trimatu(chol(lgtdata_vector[lgt].hess + rootpi * trans(rootpi))), eye(nvar, nvar)); //trimatu interprets the matrix as upper triangular and makes solve more efficient
+            //     incroot = chol(ucholinv * trans(ucholinv));
 
-                // trans(incroot) * incroot = (H + Vb^{-1})^{-1}
-                metropout_struct = mnlMetropOnce_con_MH(lgtdata_vector[lgt].y, lgtdata_vector[lgt].X, vectorise(oldbetas(lgt, span::all)), oldll[lgt], s, incroot, betabar, rootpi, SignRes);
-            }
-            else
-            {
+            //     // trans(incroot) * incroot = (H + Vb^{-1})^{-1}
+            //     metropout_struct = mnlMetropOnce_con_MH(lgtdata_vector[lgt].y, lgtdata_vector[lgt].X, vectorise(oldbetas(lgt, span::all)), oldll[lgt], s, incroot, betabar, rootpi, SignRes);
+            // }
+            // else
+            // {
                 // rootpi * trans(rootpi) = Sigma^{-1}
                 L = inv(rootpi * trans(rootpi));
 
                 // L * trans(L) = Sigma
                 L = chol(L, "lower");
                 metropout_struct = ESS_draw_hierLogitMixture(lgtdata_vector[lgt].y, lgtdata_vector[lgt].X, vectorise(oldbetas(lgt, span::all)), betabar, L, oldll[lgt], SignRes);
-            }
+            // }
 
             oldbetas(lgt, span::all) = trans(metropout_struct.betadraw);
             oldll[lgt] = metropout_struct.oldll;

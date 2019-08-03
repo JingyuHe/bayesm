@@ -1,4 +1,4 @@
-rhierMnlRwMixture_slice=function(Data,Prior,Mcmc, p_MH){
+rhierMnlRwMixture_slice=function(Data,Prior,Mcmc, p_MH = 0){
 #
 # revision history:
 #   12/04 changed by rossi to fix bug in drawdelta when there is zero/one unit in a mixture component

@@ -273,6 +273,30 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// rhierLinearModel_slice_rcpp_loop
+List rhierLinearModel_slice_rcpp_loop(List const& regdata, mat const& Z, mat const& Deltabar, mat const& A, double nu, mat const& V, double nu_e, vec const& ssq, vec tau, mat Delta, mat Vbeta, int R, int keep, int nprint);
+RcppExport SEXP _bayesm_rhierLinearModel_slice_rcpp_loop(SEXP regdataSEXP, SEXP ZSEXP, SEXP DeltabarSEXP, SEXP ASEXP, SEXP nuSEXP, SEXP VSEXP, SEXP nu_eSEXP, SEXP ssqSEXP, SEXP tauSEXP, SEXP DeltaSEXP, SEXP VbetaSEXP, SEXP RSEXP, SEXP keepSEXP, SEXP nprintSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List const& >::type regdata(regdataSEXP);
+    Rcpp::traits::input_parameter< mat const& >::type Z(ZSEXP);
+    Rcpp::traits::input_parameter< mat const& >::type Deltabar(DeltabarSEXP);
+    Rcpp::traits::input_parameter< mat const& >::type A(ASEXP);
+    Rcpp::traits::input_parameter< double >::type nu(nuSEXP);
+    Rcpp::traits::input_parameter< mat const& >::type V(VSEXP);
+    Rcpp::traits::input_parameter< double >::type nu_e(nu_eSEXP);
+    Rcpp::traits::input_parameter< vec const& >::type ssq(ssqSEXP);
+    Rcpp::traits::input_parameter< vec >::type tau(tauSEXP);
+    Rcpp::traits::input_parameter< mat >::type Delta(DeltaSEXP);
+    Rcpp::traits::input_parameter< mat >::type Vbeta(VbetaSEXP);
+    Rcpp::traits::input_parameter< int >::type R(RSEXP);
+    Rcpp::traits::input_parameter< int >::type keep(keepSEXP);
+    Rcpp::traits::input_parameter< int >::type nprint(nprintSEXP);
+    rcpp_result_gen = Rcpp::wrap(rhierLinearModel_slice_rcpp_loop(regdata, Z, Deltabar, A, nu, V, nu_e, ssq, tau, Delta, Vbeta, R, keep, nprint));
+    return rcpp_result_gen;
+END_RCPP
+}
 // rhierMnlDP_rcpp_loop
 List rhierMnlDP_rcpp_loop(int R, int keep, int nprint, List const& lgtdata, mat const& Z, vec const& deltabar, mat const& Ad, List const& PrioralphaList, List const& lambda_hyper, bool drawdelta, int nvar, mat oldbetas, double s, int maxuniq, int gridsize, double BayesmConstantA, int BayesmConstantnuInc, double BayesmConstantDPalpha);
 RcppExport SEXP _bayesm_rhierMnlDP_rcpp_loop(SEXP RSEXP, SEXP keepSEXP, SEXP nprintSEXP, SEXP lgtdataSEXP, SEXP ZSEXP, SEXP deltabarSEXP, SEXP AdSEXP, SEXP PrioralphaListSEXP, SEXP lambda_hyperSEXP, SEXP drawdeltaSEXP, SEXP nvarSEXP, SEXP oldbetasSEXP, SEXP sSEXP, SEXP maxuniqSEXP, SEXP gridsizeSEXP, SEXP BayesmConstantASEXP, SEXP BayesmConstantnuIncSEXP, SEXP BayesmConstantDPalphaSEXP) {
@@ -818,6 +842,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_bayesm_rdirichlet", (DL_FUNC) &_bayesm_rdirichlet, 1},
     {"_bayesm_rhierLinearMixture_rcpp_loop", (DL_FUNC) &_bayesm_rhierLinearMixture_rcpp_loop, 19},
     {"_bayesm_rhierLinearModel_rcpp_loop", (DL_FUNC) &_bayesm_rhierLinearModel_rcpp_loop, 14},
+    {"_bayesm_rhierLinearModel_slice_rcpp_loop", (DL_FUNC) &_bayesm_rhierLinearModel_slice_rcpp_loop, 14},
     {"_bayesm_rhierMnlDP_rcpp_loop", (DL_FUNC) &_bayesm_rhierMnlDP_rcpp_loop, 18},
     {"_bayesm_llmnl_con", (DL_FUNC) &_bayesm_llmnl_con, 4},
     {"_bayesm_rhierMnlRwMixture_rcpp_loop", (DL_FUNC) &_bayesm_rhierMnlRwMixture_rcpp_loop, 19},
