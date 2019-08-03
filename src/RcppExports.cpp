@@ -597,6 +597,28 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// rmvpGibbs_slice_rcpp_loop
+List rmvpGibbs_slice_rcpp_loop(int R, int keep, int nprint, int p, ivec const& y, mat const& X, vec const& beta0, mat const& sigma0, mat const& V, double nu, vec const& betabar, mat const& A);
+RcppExport SEXP _bayesm_rmvpGibbs_slice_rcpp_loop(SEXP RSEXP, SEXP keepSEXP, SEXP nprintSEXP, SEXP pSEXP, SEXP ySEXP, SEXP XSEXP, SEXP beta0SEXP, SEXP sigma0SEXP, SEXP VSEXP, SEXP nuSEXP, SEXP betabarSEXP, SEXP ASEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type R(RSEXP);
+    Rcpp::traits::input_parameter< int >::type keep(keepSEXP);
+    Rcpp::traits::input_parameter< int >::type nprint(nprintSEXP);
+    Rcpp::traits::input_parameter< int >::type p(pSEXP);
+    Rcpp::traits::input_parameter< ivec const& >::type y(ySEXP);
+    Rcpp::traits::input_parameter< mat const& >::type X(XSEXP);
+    Rcpp::traits::input_parameter< vec const& >::type beta0(beta0SEXP);
+    Rcpp::traits::input_parameter< mat const& >::type sigma0(sigma0SEXP);
+    Rcpp::traits::input_parameter< mat const& >::type V(VSEXP);
+    Rcpp::traits::input_parameter< double >::type nu(nuSEXP);
+    Rcpp::traits::input_parameter< vec const& >::type betabar(betabarSEXP);
+    Rcpp::traits::input_parameter< mat const& >::type A(ASEXP);
+    rcpp_result_gen = Rcpp::wrap(rmvpGibbs_slice_rcpp_loop(R, keep, nprint, p, y, X, beta0, sigma0, V, nu, betabar, A));
+    return rcpp_result_gen;
+END_RCPP
+}
 // rmvst
 vec rmvst(double nu, vec const& mu, mat const& root);
 RcppExport SEXP _bayesm_rmvst(SEXP nuSEXP, SEXP muSEXP, SEXP rootSEXP) {
@@ -856,6 +878,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_bayesm_rmnpGibbs_rcpp_loop", (DL_FUNC) &_bayesm_rmnpGibbs_rcpp_loop, 12},
     {"_bayesm_rmultireg", (DL_FUNC) &_bayesm_rmultireg, 6},
     {"_bayesm_rmvpGibbs_rcpp_loop", (DL_FUNC) &_bayesm_rmvpGibbs_rcpp_loop, 12},
+    {"_bayesm_rmvpGibbs_slice_rcpp_loop", (DL_FUNC) &_bayesm_rmvpGibbs_slice_rcpp_loop, 12},
     {"_bayesm_rmvst", (DL_FUNC) &_bayesm_rmvst, 3},
     {"_bayesm_rnegbinRw_rcpp_loop", (DL_FUNC) &_bayesm_rnegbinRw_rcpp_loop, 14},
     {"_bayesm_rnmixGibbs_rcpp_loop", (DL_FUNC) &_bayesm_rnmixGibbs_rcpp_loop, 11},

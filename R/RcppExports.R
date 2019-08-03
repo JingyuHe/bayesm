@@ -117,6 +117,10 @@ rmvpGibbs_rcpp_loop <- function(R, keep, nprint, p, y, X, beta0, sigma0, V, nu, 
     .Call('_bayesm_rmvpGibbs_rcpp_loop', PACKAGE = 'bayesm', R, keep, nprint, p, y, X, beta0, sigma0, V, nu, betabar, A)
 }
 
+rmvpGibbs_slice_rcpp_loop <- function(R, keep, nprint, p, y, X, beta0, sigma0, V, nu, betabar, A) {
+    .Call('_bayesm_rmvpGibbs_slice_rcpp_loop', PACKAGE = 'bayesm', R, keep, nprint, p, y, X, beta0, sigma0, V, nu, betabar, A)
+}
+
 rmvst <- function(nu, mu, root) {
     .Call('_bayesm_rmvst', PACKAGE = 'bayesm', nu, mu, root)
 }
