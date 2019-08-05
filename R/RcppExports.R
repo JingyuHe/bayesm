@@ -57,6 +57,10 @@ rhierLinearMixture_rcpp_loop <- function(regdata, Z, deltabar, Ad, mubar, Amu, n
     .Call('_bayesm_rhierLinearMixture_rcpp_loop', PACKAGE = 'bayesm', regdata, Z, deltabar, Ad, mubar, Amu, nu, V, nu_e, ssq, R, keep, nprint, drawdelta, olddelta, a, oldprob, ind, tau)
 }
 
+rhierLinearMixture_slice_rcpp_loop <- function(regdata, Z, deltabar, Ad, mubar, Amu, nu, V, nu_e, ssq, R, keep, nprint, drawdelta, olddelta, a, oldprob, ind, tau) {
+    .Call('_bayesm_rhierLinearMixture_slice_rcpp_loop', PACKAGE = 'bayesm', regdata, Z, deltabar, Ad, mubar, Amu, nu, V, nu_e, ssq, R, keep, nprint, drawdelta, olddelta, a, oldprob, ind, tau)
+}
+
 rhierLinearModel_rcpp_loop <- function(regdata, Z, Deltabar, A, nu, V, nu_e, ssq, tau, Delta, Vbeta, R, keep, nprint) {
     .Call('_bayesm_rhierLinearModel_rcpp_loop', PACKAGE = 'bayesm', regdata, Z, Deltabar, A, nu, V, nu_e, ssq, tau, Delta, Vbeta, R, keep, nprint)
 }
