@@ -1,41 +1,5 @@
 #include "bayesm.h"
 
-// double llmnl_con_MH(vec const &betastar, vec const &y, mat const &X, vec const &SignRes = NumericVector::create(0))
-// {
-
-//     // Wayne Taylor 7/8/2016
-
-//     // Evaluates log-likelihood for the multinomial logit model WITH SIGN CONSTRAINTS
-//     // NOTE: this is exported only because it is used in the shell .R function, it will not be available to users
-
-//     //Reparameterize betastar to beta to allow for sign restrictions
-//     vec beta = betastar;
-
-//     //The default SignRes vector is a single element vector containing a zero
-//     //any() returns true if any elements of SignRes are non-zero
-//     if (any(SignRes))
-//     {
-//         uvec signInd = find(SignRes != 0);
-//         beta.elem(signInd) = SignRes.elem(signInd) % exp(beta.elem(signInd)); //% performs element-wise multiplication
-//     }
-
-//     int n = y.size();
-//     int j = X.n_rows / n;
-//     mat Xbeta = X * beta;
-
-//     vec xby = zeros<vec>(n);
-//     vec denom = zeros<vec>(n);
-
-//     for (int i = 0; i < n; i++)
-//     {
-//         for (int p = 0; p < j; p++)
-//             denom[i] = denom[i] + exp(Xbeta[i * j + p]);
-//         xby[i] = Xbeta[i * j + y[i] - 1];
-//     }
-
-//     return (sum(xby - log(denom)));
-// }
-
 //mnlRwMetropOnce=
 //function(y,X,oldbeta,oldll,s,inc.root,betabar,rootpi){
 //#
@@ -61,67 +25,7 @@
 //return(list(betadraw=betadraw,stay=stay,oldll=oldll))
 //}
 
-mnlMetropOnceOut mnlMetropOnce_con_MH(vec const &y, mat const &X, vec const &oldbeta,
-                                      double oldll, double s, mat const &incroot,
-                                      vec const &betabar, mat const &rootpi, vec const &SignRes = NumericVector::create(2))
-{
-    // Wayne Taylor 10/01/2014
-
-    // function to execute rw metropolis for the MNL
-    // y is n vector with element = 1,...,j indicating which alt chosen
-    // X is nj x k matrix of xvalues for each of j alt on each of n occasions
-    // RW increments are N(0,s^2*t(inc.root)%*%inc.root)
-    // prior on beta is N(betabar,Sigma)  Sigma^-1=rootpi*t(rootpi)
-    //  inc.root, rootpi are upper triangular
-    //  this means that we are using the UL decomp of Sigma^-1 for prior
-    // oldbeta is the current
-
-    mnlMetropOnceOut out_struct;
-
-    double unif;
-    vec betadraw, alphaminv;
-
-    int stay = 0;
-
-
-    // Note trans(incroot) here
-    // The actual covariance is trans(incroot) * incroot = inv(H + Vb^{-1})
-    vec betac = oldbeta + s * trans(incroot) * as<vec>(rnorm(X.n_cols));
-
-
-    double cll = llmnl_con(betac, y, X, SignRes);
-    double clpost = cll + lndMvn(betac, betabar, rootpi);
-    double ldiff = clpost - oldll - lndMvn(oldbeta, betabar, rootpi);
-    alphaminv << 1 << exp(ldiff);
-    double alpha = min(alphaminv);
-
-    if (alpha < 1)
-    {
-        unif = as_scalar(vec(runif(1)));
-    }
-    else
-    {
-        unif = 0;
-    }
-    if (unif <= alpha)
-    {
-        betadraw = betac;
-        oldll = cll;
-    }
-    else
-    {
-        betadraw = oldbeta;
-        stay = 1;
-    }
-
-    out_struct.betadraw = betadraw;
-    out_struct.stay = stay;
-    out_struct.oldll = oldll;
-
-    return (out_struct);
-}
-
-mnlMetropOnceOut ESS_draw_hierLogitMixture(vec const &y, mat const &X, vec const &beta_ini, vec const &beta_hat, mat const &L, double oldll, vec const &SignRes = NumericVector::create(2))
+mnlMetropOnceOut ESS_draw_hierLogitMixtureLogNormal(vec const &y, mat const &X, vec const &beta_ini, vec const &beta_hat, mat const &L, double oldll, vec const &SignRes = NumericVector::create(2))
 {
 
     /*
@@ -195,7 +99,7 @@ mnlMetropOnceOut ESS_draw_hierLogitMixture(vec const &y, mat const &X, vec const
 //MAIN FUNCTION-------------------------------------------------------------------------------------
 
 //[[Rcpp::export]]
-List rhierMnlRwMixture_slice_rcpp_loop(List const &lgtdata, mat const &Z,
+List rhierMnlRwMixtureLogNormal_slice_rcpp_loop(List const &lgtdata, mat const &Z,
                                        vec const &deltabar, mat const &Ad, mat const &mubar, mat const &Amu,
                                        double nu, mat const &V, double s,
                                        int R, int keep, int nprint, bool drawdelta,
@@ -306,7 +210,7 @@ List rhierMnlRwMixture_slice_rcpp_loop(List const &lgtdata, mat const &Z,
 
                 // L * trans(L) = Sigma
                 L = chol(L, "lower");
-                metropout_struct = ESS_draw_hierLogitMixture(lgtdata_vector[lgt].y, lgtdata_vector[lgt].X, vectorise(oldbetas(lgt, span::all)), betabar, L, oldll[lgt], SignRes);
+                metropout_struct = ESS_draw_hierLogitMixtureLogNormal(lgtdata_vector[lgt].y, lgtdata_vector[lgt].X, vectorise(oldbetas(lgt, span::all)), betabar, L, oldll[lgt], SignRes);
             // }
 
             oldbetas(lgt, span::all) = trans(metropout_struct.betadraw);

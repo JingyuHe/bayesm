@@ -85,6 +85,8 @@ double lndMvst(vec const& x, double nu, vec const& mu, mat const& rooti, bool NO
 
 double lndMvn(vec const& x, vec const& mu, mat const& rooti);
 
+double lndLogMvn(vec const& x, vec const& mu, mat const& rooti);
+
 double lndIWishart(double nu, mat const& V, mat const& IW);
 
 vec rmvst(double nu, vec const& mu, mat const& root);
@@ -151,5 +153,8 @@ lambda lambdaD(lambda const& lambda_struct, std::vector<murooti> const& thetaSta
 void startMcmcTimer();
 void infoMcmcTimer(int rep, int R);
 void endMcmcTimer();
+
+
+double llmnl_con(vec const& betastar, vec const& y, mat const& X, vec const& SignRes = NumericVector::create(0));
 
 #endif
