@@ -15,7 +15,7 @@ rmnlIndepMetrop,rscaleUsage,ghkvec,condMom,logMargDenNR,
 rhierBinLogit,rnegbinRw,rhierNegbinRw,rbiNormGibbs,clusterMix,rsurGibbs,
 mixDenBi,mnpProb,rhierLinearMixture, rhierLinearMixture_slice,
 summary.bayesm.mat,summary.bayesm.nmix,summary.bayesm.var,
-plot.bayesm.mat,plot.bayesm.hcoef,plot.bayesm.nmix,
+plot.bayesm.mat,plot.bayesm.hcoef,plot.bayesm.nmix,rhierMnlRwMixtureLogNormal,
 rordprobitGibbs,rivGibbs,rivDP,rDPGibbs,
 rhierMnlDP,cgetC,rbayesBLP)
 
