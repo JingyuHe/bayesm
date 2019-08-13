@@ -29,9 +29,13 @@ double lndLogMvn(vec const &x, vec const &mu, mat const &rooti)
 
   if (all_positive)
   {
-    z = vectorise(trans(rooti) * (log(x) - mu));
+    // z = vectorise(trans(rooti) * (log(x) - mu));
 
-    output = (-(x.size() / 2.0) * log(2 * M_PI) - .5 * (trans(z) * z) - sum(log(x)) + sum(log(diagvec(rooti))))[0];
+    // output = (-(x.size() / 2.0) * log(2 * M_PI) - .5 * (trans(z) * z) - sum(log(x)) + sum(log(diagvec(rooti))))[0];
+
+    // add one term of Jacobian
+    output = lndMvn(log(x), mu, rooti) - sum(log(x));
+
   }
   else
   {
