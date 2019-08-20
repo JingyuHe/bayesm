@@ -2,7 +2,7 @@
 
 //FUNCTION SPECIFIC TO MAIN FUNCTION------------------------------------------------------
 //[[Rcpp::export]]
-double llmnl_con(vec const& betastar, vec const& y, mat const& X, vec const& SignRes = NumericVector::create(0)){
+double llmnl_con(vec const& betastar, vec const& y, mat const& X, vec const& SignRes){
   
   // Wayne Taylor 7/8/2016
   

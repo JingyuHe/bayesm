@@ -190,18 +190,26 @@ List rhierMnlRwMixtureLogNormal_slice_rcpp_loop(List const &lgtdata, mat const &
             // rootpi * trans(rootpi) = inv(Sigma)
             Sigma = inv(rootpi * trans(rootpi));
 
-            if (1)
+            if (0)
             {
                 // expectation and covariance of the proposal ellipse
-                mu_ellipse = exp(betabar + rootpi.diag() / 2.0);
+                // mu_ellipse = exp(betabar + Sigma.diag() / 2.0);
+
+                // mode of lognormal
+
                 // % is elementwise multiplication
-                cov_ellipse = (mu_ellipse * trans(mu_ellipse)) % (exp(Sigma) - ones(Sigma.n_rows, Sigma.n_cols));
+                // cov_ellipse = (mu_ellipse * trans(mu_ellipse)) % (exp(Sigma) - ones(Sigma.n_rows, Sigma.n_cols));
+
+                cov_ellipse = Sigma;
             }
             else
             {
-                mu_ellipse = betabar;
+                // mu_ellipse = betabar;
+                mu_ellipse = exp(betabar - Sigma * ones(Sigma.n_rows, 1));
                 cov_ellipse = Sigma;
             }
+
+            // cov_ellipse = Sigma;
 
 
 
@@ -211,7 +219,11 @@ List rhierMnlRwMixtureLogNormal_slice_rcpp_loop(List const &lgtdata, mat const &
                 temp = vectorise(trans(rootpi) * (vectorise(oldbetas(lgt, span::all)) - mu_ellipse));
                 ss1 = (ss + betabar.n_elem) / 2.0;
                 ss2 = (0.5 * (ss + (trans(temp) * temp)))[0] ;
-                lambda = randg<vec>(1, distr_param(ss1,1.0/ss2))[0];
+
+                // draw scale parameter from inverse gamma
+                lambda = 1.0 / randg<vec>(1, distr_param(ss1,1.0/ss2))[0];
+            }else{
+                lambda = 1.0;
             }
 
             // incroot * trans(incroot) = cov_ellipse
