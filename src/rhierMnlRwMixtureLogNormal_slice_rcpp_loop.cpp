@@ -9,7 +9,6 @@ mnlMetropOnceOut ESS_draw_hierLogitMixtureLogNormal(vec const &y, mat const &X, 
     sample via elliptical slice sampler
     Input : beta_ini, vector of initial value
             beta_hat, mean of beta (likelihood function)
-            L, Cholesky factor (lower triangular LL' = Sigma) of covariance matrix of normal part
   */
     mnlMetropOnceOut out_struct;
 
@@ -18,13 +17,11 @@ mnlMetropOnceOut ESS_draw_hierLogitMixtureLogNormal(vec const &y, mat const &X, 
 
     // draw the auxillary vector
     vec eps = arma::randn<vec>(incroot.n_cols);
-    // vec nu = L * eps;
 
     vec nu = incroot * eps;
 
     // compute the prior threshold
     double u = as_scalar(randu<vec>(1));
-
 
     double ly = llmnl_con(beta_ini, y, X, SignRes) + lndLogMvn(beta_ini, beta_hat, rootpi) - lndMvn(beta_ini, mu_ellipse, incroot_inv);
 
@@ -61,7 +58,6 @@ mnlMetropOnceOut ESS_draw_hierLogitMixtureLogNormal(vec const &y, mat const &X, 
         betaprop = beta * cos(thetaprop) + nu * sin(thetaprop);
 
         compll = llmnl_con(betaprop + mu_ellipse, y, X, SignRes) + lndLogMvn(betaprop + mu_ellipse, beta_hat, rootpi) - lndMvn(betaprop + mu_ellipse, mu_ellipse, incroot_inv);
-
     }
 
     // accept the proposal
@@ -95,7 +91,7 @@ List rhierMnlRwMixtureLogNormal_slice_rcpp_loop(List const &lgtdata, mat const &
     int nvar = V.n_cols;
     int nz = Z.n_cols;
 
-    mat rootpi, betabar, ucholinv, L;
+    mat rootpi, betabar, ucholinv;
     int mkeep;
     mnlMetropOnceOut metropout_struct;
     List lgtdatai, nmix;
@@ -134,6 +130,12 @@ List rhierMnlRwMixtureLogNormal_slice_rcpp_loop(List const &lgtdata, mat const &
     mat incroot;
     mat incroot_inv;
 
+    // two parameters of inverse Gamma prior
+    double ss1;
+    double ss2;
+    vec temp;
+    double lambda;
+    double ss = 2;
 
     if (nprint > 0)
         startMcmcTimer();
@@ -185,28 +187,38 @@ List rhierMnlRwMixtureLogNormal_slice_rcpp_loop(List const &lgtdata, mat const &
                 oldll[lgt] = llmnl_con(vectorise(oldbetas(lgt, span::all)), lgtdata_vector[lgt].y, lgtdata_vector[lgt].X, SignRes) + lndLogMvn(vectorise(oldbetas(lgt, span::all)), betabar, rootpi);
             ;
 
-
             // rootpi * trans(rootpi) = inv(Sigma)
             Sigma = inv(rootpi * trans(rootpi));
 
+            if (1)
+            {
+                // expectation and covariance of the proposal ellipse
+                mu_ellipse = exp(betabar + rootpi.diag() / 2.0);
+                // % is elementwise multiplication
+                cov_ellipse = (mu_ellipse * trans(mu_ellipse)) % (exp(Sigma) - ones(Sigma.n_rows, Sigma.n_cols));
+            }
+            else
+            {
+                mu_ellipse = betabar;
+                cov_ellipse = Sigma;
+            }
 
-            // expectation and covariance of the proposal ellipse 
-            // mu_ellipse = exp(betabar + Sigma.diag() / 2.0);
-
-            mu_ellipse = betabar;
 
 
-            // % is elementwise multiplication
-            // cov_ellipse = (mu_ellipse * trans(mu_ellipse)) % (exp(Sigma) - ones(Sigma.n_rows, Sigma.n_cols));
 
-            cov_ellipse = Sigma;
+            if(1){
+                // sampling s, generalized ESS
+                temp = vectorise(trans(rootpi) * (vectorise(oldbetas(lgt, span::all)) - mu_ellipse));
+                ss1 = (ss + betabar.n_elem) / 2.0;
+                ss2 = (0.5 * (ss + (trans(temp) * temp)))[0] ;
+                lambda = randg<vec>(1, distr_param(ss1,1.0/ss2))[0];
+            }
 
             // incroot * trans(incroot) = cov_ellipse
-            incroot = chol(cov_ellipse, "lower");
+            incroot = chol(cov_ellipse, "lower") * sqrt(lambda);
 
             // incroot_inv * trans(incroot_inv) = inv(cov_ellipse), used for calculating likelihood
-            incroot_inv = chol(inv(cov_ellipse), "lower");
-
+            incroot_inv = chol(inv(cov_ellipse), "lower") / sqrt(lambda);
 
             // betabar is mean AFTER taking log
 
