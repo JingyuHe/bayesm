@@ -1,12 +1,9 @@
 #include "bayesm.h"
 
-mnlMetropOnceOut ESS_draw_hierLogitMixtureLogNormal(vec const &y, mat const &X, vec const &beta_ini, vec const &beta_hat, mat const &L, mat const &rootpi, mat const &Sigma, double oldll, mat const &incroot, vec const &SignRes = NumericVector::create(2))
+mnlMetropOnceOut ESS_draw_hierLogitMixtureLogNormal(vec const &y, mat const &X, vec const &beta_ini, vec const &beta_hat, mat const &L, mat const &rootpi, double oldll, mat const &incroot, mat const &incroot_inv, mat &mu, vec const &SignRes = NumericVector::create(2))
 {
     // since this is log normal distributions
     // E[X] = exp(beta_hat + diag(Sigma) / 2)
-
-    vec mu = exp(beta_hat + Sigma.diag() / 2.0);
-
 
     /*
     sample via elliptical slice sampler
@@ -15,6 +12,7 @@ mnlMetropOnceOut ESS_draw_hierLogitMixtureLogNormal(vec const &y, mat const &X, 
             L, Cholesky factor (lower triangular LL' = Sigma) of covariance matrix of normal part
   */
     mnlMetropOnceOut out_struct;
+
     // subtract mean from the initial value, sample the deviation from mean
     vec beta = beta_ini - mu;
 
@@ -27,17 +25,20 @@ mnlMetropOnceOut ESS_draw_hierLogitMixtureLogNormal(vec const &y, mat const &X, 
     // compute the prior threshold
     double u = as_scalar(randu<vec>(1));
 
-    double priorcomp = oldll; //llmnl_con(beta_ini, y, X, SignRes);
+    // double priorcomp = oldll; //llmnl_con(beta_ini, y, X, SignRes);
 
     // cout << oldll << endl;
     // cout << llmnl(beta_ini, y, X) << endl;
 
     // double ly = priorcomp + log(u); // here is log likelihood
 
-    mat LL = chol(inv(rootpi * trans(rootpi)), "lower");
+    // mat LL = chol(inv(rootpi * trans(rootpi)), "lower");
 
-    double ly = llmnl_con(beta_ini, y, X, SignRes) + lndLogMvn(beta_ini, beta_hat, rootpi) - lndMvn(beta_ini,mu,LL);
+    double ly = llmnl_con(beta_ini, y, X, SignRes) + lndLogMvn(beta_ini, beta_hat, rootpi) - lndMvn(beta_ini, mu, incroot_inv);
 
+
+    // slice sampling
+    ly = ly + log(u);
 
     // elliptical slice sampling
     double thetaprop = as_scalar(randu<vec>(1)) * 2.0 * M_PI;
@@ -48,7 +49,7 @@ mnlMetropOnceOut ESS_draw_hierLogitMixtureLogNormal(vec const &y, mat const &X, 
     double compll;
 
     // now the "likelihood" to evaluate is MNL likelihood * lognormal density
-    compll = llmnl_con(betaprop + mu, y, X, SignRes) + lndLogMvn(betaprop + mu, beta_hat, rootpi) - lndMvn(betaprop + mu,mu,LL);
+    compll = llmnl_con(betaprop + mu, y, X, SignRes) + lndLogMvn(betaprop + mu, beta_hat, rootpi) - lndMvn(betaprop + mu, mu, incroot_inv);
 
     // cout << "--------------------" << endl;
 
@@ -68,7 +69,7 @@ mnlMetropOnceOut ESS_draw_hierLogitMixtureLogNormal(vec const &y, mat const &X, 
 
         betaprop = beta * cos(thetaprop) + nu * sin(thetaprop);
 
-        compll = llmnl_con(betaprop + mu, y, X, SignRes) + lndLogMvn(betaprop + mu, beta_hat, rootpi) - lndMvn(betaprop + mu,mu,LL);
+        compll = llmnl_con(betaprop + mu, y, X, SignRes) + lndLogMvn(betaprop + mu, beta_hat, rootpi) - lndMvn(betaprop + mu, mu, incroot_inv);
 
         // cout << ly << "  " << compll << "   "  << betaprop << endl;
         // cout << thetamin << " " << thetamax << endl;
@@ -86,7 +87,6 @@ mnlMetropOnceOut ESS_draw_hierLogitMixtureLogNormal(vec const &y, mat const &X, 
     out_struct.oldll = oldll;
     return out_struct;
 }
-
 
 //MAIN FUNCTION-------------------------------------------------------------------------------------
 
@@ -107,7 +107,7 @@ List rhierMnlRwMixtureLogNormal_slice_rcpp_loop(List const &lgtdata, mat const &
     int nvar = V.n_cols;
     int nz = Z.n_cols;
 
-    mat rootpi, betabar, ucholinv, incroot, L;
+    mat rootpi, betabar, ucholinv, L;
     int mkeep;
     mnlMetropOnceOut metropout_struct;
     List lgtdatai, nmix;
@@ -139,8 +139,13 @@ List rhierMnlRwMixtureLogNormal_slice_rcpp_loop(List const &lgtdata, mat const &
     betadraw.fill(1);
     oldbetas.fill(1);
 
-
     mat Sigma;
+
+    mat mu_prop;
+    mat Sigma_prop;
+    mat incroot;
+    mat incroot_inv;
+
 
     if (nprint > 0)
         startMcmcTimer();
@@ -174,7 +179,7 @@ List rhierMnlRwMixtureLogNormal_slice_rcpp_loop(List const &lgtdata, mat const &
         {
             List oldcomplgt = oldcomp[ind[lgt] - 1];
 
-            // rooti * trans(rooti) = sigma^{-1}  !!! cholesky root of sigma Inverse
+            // rooti * trans(rooti) = sigma^{-1}  !!! cholesky root of sigma INVERSE
             rootpi = as<mat>(oldcomplgt[1]);
 
             //note: beta_i = Delta*z_i + u_i  Delta is nvar x nz
@@ -189,35 +194,33 @@ List rhierMnlRwMixtureLogNormal_slice_rcpp_loop(List const &lgtdata, mat const &
             }
 
             if (rep == 0)
-                oldll[lgt] = llmnl_con(vectorise(oldbetas(lgt, span::all)), lgtdata_vector[lgt].y, lgtdata_vector[lgt].X, SignRes) + lndLogMvn(vectorise(oldbetas(lgt, span::all)), betabar, rootpi);;
-
-            // if (arma::randu<double>() < p_MH)
-            // {
-            //     //compute inc.root
-
-                // ucholinv * trans(ucholinv) = (H + Vb^{-1})^{-1}
-                ucholinv = solve(trimatu(chol(lgtdata_vector[lgt].hess + rootpi * trans(rootpi))), eye(nvar, nvar)); //trimatu interprets the matrix as upper triangular and makes solve more efficient
-                incroot = chol(ucholinv * trans(ucholinv));
-
-                // incroot = chol(inv(incroot * trans(incroot)), "lower");
-
-                // because trans(incroot) * incroot = (H + Vb^{-1})^{-1}, need to take inverse
-
-                incroot = trans(incroot);
-
-                // incroot = 3 * L;
+                oldll[lgt] = llmnl_con(vectorise(oldbetas(lgt, span::all)), lgtdata_vector[lgt].y, lgtdata_vector[lgt].X, SignRes) + lndLogMvn(vectorise(oldbetas(lgt, span::all)), betabar, rootpi);
+            ;
 
             Sigma = inv(rootpi * trans(rootpi));
+            
+            // LL^T = Sigma
+            // rootpi * rootpi^T = inv(Sigma)
 
-            // L * trans(L) = Sigma
             L = chol(Sigma, "lower");
 
+            // mean and variance of the lognormal term
+            mu_prop = exp(betabar + Sigma.diag() / 2.0);
+
+            // % for elementwise multiplication
+            Sigma_prop = (mu_prop * trans(mu_prop)) % (exp(Sigma) - ones(Sigma.n_rows, Sigma.n_cols));
+
+            // incroot * trans(incroot) = Sigma_prop
+            incroot = chol(Sigma_prop, "lower");
+
+            // incroot_inv * trans(incroot_inv) = inv(Sigma_prop), used when calculate likelihood
+            incroot_inv = trans(inv(incroot));
 
             // L * L^T is the covariance of lognormal term
             // incroot * incroot^T is covariance of slice sampling term
             // betabar is mean AFTER taking log
 
-            metropout_struct = ESS_draw_hierLogitMixtureLogNormal(lgtdata_vector[lgt].y, lgtdata_vector[lgt].X, vectorise(oldbetas(lgt, span::all)), betabar, L, Sigma, rootpi, oldll[lgt], incroot, SignRes);
+            metropout_struct = ESS_draw_hierLogitMixtureLogNormal(lgtdata_vector[lgt].y, lgtdata_vector[lgt].X, vectorise(oldbetas(lgt, span::all)), betabar, L, rootpi, oldll[lgt], incroot, incroot_inv, mu_prop, SignRes);
             // }
 
             oldbetas(lgt, span::all) = trans(metropout_struct.betadraw);
