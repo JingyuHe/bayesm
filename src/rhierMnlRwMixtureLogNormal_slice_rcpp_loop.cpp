@@ -23,7 +23,9 @@ mnlMetropOnceOut ESS_draw_hierLogitMixtureLogNormal(vec const &y, mat const &X, 
     // compute the prior threshold
     double u = as_scalar(randu<vec>(1));
 
-    double ly = llmnl_con(beta_ini, y, X, SignRes) + lndLogMvn(beta_ini, beta_hat, rootpi) - lndMvn(beta_ini, mu_ellipse, incroot_inv);
+    // double ly = llmnl_con(beta_ini, y, X, SignRes) + lndLogMvn(beta_ini, beta_hat, rootpi) - lndMvn(beta_ini, mu_ellipse, incroot_inv);
+
+    double ly = llmnl_con(beta_ini, y, X, SignRes) + lndLogMvn(beta_ini, beta_hat, rootpi) - lndMvst(beta_ini, 2.0, mu_ellipse, incroot_inv, false);
 
     // slice sampling
     ly = ly + log(u);
@@ -37,7 +39,8 @@ mnlMetropOnceOut ESS_draw_hierLogitMixtureLogNormal(vec const &y, mat const &X, 
     double compll;
 
     // now the "likelihood" to evaluate is MNL likelihood * lognormal density
-    compll = llmnl_con(betaprop + mu_ellipse, y, X, SignRes) + lndLogMvn(betaprop + mu_ellipse, beta_hat, rootpi) - lndMvn(betaprop + mu_ellipse, mu_ellipse, incroot_inv);
+    // compll = llmnl_con(betaprop + mu_ellipse, y, X, SignRes) + lndLogMvn(betaprop + mu_ellipse, beta_hat, rootpi) - lndMvn(betaprop + mu_ellipse, mu_ellipse, incroot_inv);
+    compll = llmnl_con(betaprop + mu_ellipse, y, X, SignRes) + lndLogMvn(betaprop + mu_ellipse, beta_hat, rootpi) - lndMvst(betaprop + mu_ellipse, 2.0, mu_ellipse, incroot_inv, false);
 
     // cout << "--------------------" << endl;
 
@@ -137,6 +140,8 @@ List rhierMnlRwMixtureLogNormal_slice_rcpp_loop(List const &lgtdata, mat const &
     double lambda;
     double ss = 2;
 
+    mat scale = zeros<mat>(R, nlgt);
+
     if (nprint > 0)
         startMcmcTimer();
 
@@ -195,36 +200,39 @@ List rhierMnlRwMixtureLogNormal_slice_rcpp_loop(List const &lgtdata, mat const &
                 // expectation and covariance of the proposal ellipse
                 // mu_ellipse = exp(betabar + Sigma.diag() / 2.0);
 
-                // mode of lognormal
-
                 // % is elementwise multiplication
-                // cov_ellipse = (mu_ellipse * trans(mu_ellipse)) % (exp(Sigma) - ones(Sigma.n_rows, Sigma.n_cols));
 
-                cov_ellipse = Sigma;
+                // cov_ellipse = Sigma;
             }
             else
             {
-                // mu_ellipse = betabar;
+                // use mode of lognormal
                 mu_ellipse = exp(betabar - Sigma * ones(Sigma.n_rows, 1));
+
+                // cov_ellipse = (mu_ellipse * trans(mu_ellipse)) % (exp(Sigma) - ones(Sigma.n_rows, Sigma.n_cols));
+
                 cov_ellipse = Sigma;
             }
 
             // cov_ellipse = Sigma;
 
-
-
-
-            if(1){
+            if (1)
+            {
                 // sampling s, generalized ESS
                 temp = vectorise(trans(rootpi) * (vectorise(oldbetas(lgt, span::all)) - mu_ellipse));
+                // temp = vectorise(chol(inv(Sigma), "lower") * (vectorise(oldbetas(lgt, span::all)) - mu_ellipse));
                 ss1 = (ss + betabar.n_elem) / 2.0;
-                ss2 = (0.5 * (ss + (trans(temp) * temp)))[0] ;
+                ss2 = (0.5 * (ss + (trans(temp) * temp)))[0];
 
                 // draw scale parameter from inverse gamma
-                lambda = 1.0 / randg<vec>(1, distr_param(ss1,1.0/ss2))[0];
-            }else{
+                lambda = 1.0 / randg<vec>(1, distr_param(ss1, 1.0 / ss2))[0];
+            }
+            else
+            {
                 lambda = 1.0;
             }
+
+            scale(rep, lgt) = lambda;
 
             // incroot * trans(incroot) = cov_ellipse
             incroot = chol(cov_ellipse, "lower") * sqrt(lambda);
@@ -296,7 +304,8 @@ List rhierMnlRwMixtureLogNormal_slice_rcpp_loop(List const &lgtdata, mat const &
             Named("betadraw") = betadraw,
             Named("nmix") = nmix,
             Named("loglike") = loglike,
-            Named("SignRes") = SignRes));
+            Named("SignRes") = SignRes,
+            Named("scale_of_gESS") = scale));
     }
     else
     {
@@ -304,6 +313,7 @@ List rhierMnlRwMixtureLogNormal_slice_rcpp_loop(List const &lgtdata, mat const &
             Named("betadraw") = betadraw,
             Named("nmix") = nmix,
             Named("loglike") = loglike,
-            Named("SignRes") = SignRes));
+            Named("SignRes") = SignRes,
+            Named("scale_of_gESS") = scale));
     }
 }

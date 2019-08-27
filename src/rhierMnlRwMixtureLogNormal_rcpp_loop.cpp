@@ -251,8 +251,7 @@ List rhierMnlRwMixtureLogNormal_rcpp_loop(List const &lgtdata, mat const &Z,
                 incroot = chol(cov_ellipse, "lower");
             }
 
-            metropout_struct = mnlMetropOnce_conLogNormal(lgtdata_vector[lgt].y, lgtdata_vector[lgt].X, vectorise(oldbetas(lgt, span::all)),
-                                                          oldll[lgt], s, incroot, betabar, rootpi, SignRes);
+            metropout_struct = mnlMetropOnce_conLogNormal(lgtdata_vector[lgt].y, lgtdata_vector[lgt].X, vectorise(oldbetas(lgt, span::all)), oldll[lgt], s, incroot, betabar, rootpi, SignRes);
 
             oldbetas(lgt, span::all) = trans(metropout_struct.betadraw);
             oldll[lgt] = metropout_struct.oldll;
