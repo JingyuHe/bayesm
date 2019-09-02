@@ -196,7 +196,7 @@ List rhierMnlRwMixture_slice_rcpp_loop(List const &lgtdata, mat const &Z,
                                        vec const &deltabar, mat const &Ad, mat const &mubar, mat const &Amu,
                                        double nu, mat const &V, double s,
                                        int R, int keep, int nprint, bool drawdelta,
-                                       mat olddelta, vec const &a, vec oldprob, mat oldbetas, vec ind, vec const &SignRes, double p_MH, bool MH_burnin)
+                                       mat olddelta, vec const &a, vec oldprob, mat oldbetas, vec ind, vec const &SignRes, double p_MH, bool MH_burnin, bool fix_p_burnin)
 {
     cout << "--------------------" << endl;
     cout << "mixture of MH and slice sampler" << endl;
@@ -239,6 +239,8 @@ List rhierMnlRwMixture_slice_rcpp_loop(List const &lgtdata, mat const &Z,
     if (nprint > 0)
         startMcmcTimer();
 
+    // cout << "old probs" << oldprob << endl;
+
     for (int rep = 0; rep < R; rep++)
     {
 
@@ -248,11 +250,26 @@ List rhierMnlRwMixture_slice_rcpp_loop(List const &lgtdata, mat const &Z,
         if (drawdelta)
         {
             olddelta.reshape(nvar, nz);
-            mgout = rmixGibbs(oldbetas - Z * trans(olddelta), mubar, Amu, nu, V, a, oldprob, ind);
+
+            if (rep < 2000)
+            {
+                mgout = rmixGibbs_fix_p(oldbetas - Z * trans(olddelta), mubar, Amu, nu, V, a, oldprob, ind);
+            }
+            else
+            {
+                mgout = rmixGibbs(oldbetas - Z * trans(olddelta), mubar, Amu, nu, V, a, oldprob, ind);
+            }
         }
         else
         {
-            mgout = rmixGibbs(oldbetas, mubar, Amu, nu, V, a, oldprob, ind);
+            if (rep < 2000)
+            {
+                mgout = rmixGibbs_fix_p(oldbetas, mubar, Amu, nu, V, a, oldprob, ind);
+            }
+            else
+            {
+                mgout = rmixGibbs(oldbetas, mubar, Amu, nu, V, a, oldprob, ind);
+            }
         }
 
         List oldcomp = mgout["comps"];
@@ -295,7 +312,7 @@ List rhierMnlRwMixture_slice_rcpp_loop(List const &lgtdata, mat const &Z,
                 incroot = chol(ucholinv * trans(ucholinv));
 
                 metropout_struct = mnlMetropOnce_con_MH(lgtdata_vector[lgt].y, lgtdata_vector[lgt].X, vectorise(oldbetas(lgt, span::all)),
-                                                     oldll[lgt], s, incroot, betabar, rootpi, SignRes);
+                                                        oldll[lgt], s, incroot, betabar, rootpi, SignRes);
             }
             else
             {

@@ -179,3 +179,28 @@ List rmixGibbs( mat const& y,  mat const& Bbar,
     Named("z") = z2,
     Named("comps") = comps);
 }
+
+
+
+//[[Rcpp::export]]
+List rmixGibbs_fix_p( mat const& y,  mat const& Bbar, 
+                mat const& A, double nu, 
+                mat const& V,  vec const& a, 
+                vec const& p,  vec const& z) {
+
+// Wayne Taylor 9/10/2014
+  
+  List comps = drawCompsFromLabels(y, Bbar, A, nu, V, a.size(), z);
+  
+  vec z2 = drawLabelsFromComps(y, p, comps);
+  
+  // do not update p for burn-in period
+  // vec p2 = drawPFromLabels(a, z2);
+
+  vec p2 = p;
+
+  return List::create(
+    Named("p") = p2,
+    Named("z") = z2,
+    Named("comps") = comps);
+}

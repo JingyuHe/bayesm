@@ -81,8 +81,8 @@ rhierMnlRwMixture_rcpp_loop <- function(lgtdata, Z, deltabar, Ad, mubar, Amu, nu
     .Call('_bayesm_rhierMnlRwMixture_rcpp_loop', PACKAGE = 'bayesm', lgtdata, Z, deltabar, Ad, mubar, Amu, nu, V, s, R, keep, nprint, drawdelta, olddelta, a, oldprob, oldbetas, ind, SignRes)
 }
 
-rhierMnlRwMixture_slice_rcpp_loop <- function(lgtdata, Z, deltabar, Ad, mubar, Amu, nu, V, s, R, keep, nprint, drawdelta, olddelta, a, oldprob, oldbetas, ind, SignRes, p_MH, MH_burnin) {
-    .Call('_bayesm_rhierMnlRwMixture_slice_rcpp_loop', PACKAGE = 'bayesm', lgtdata, Z, deltabar, Ad, mubar, Amu, nu, V, s, R, keep, nprint, drawdelta, olddelta, a, oldprob, oldbetas, ind, SignRes, p_MH, MH_burnin)
+rhierMnlRwMixture_slice_rcpp_loop <- function(lgtdata, Z, deltabar, Ad, mubar, Amu, nu, V, s, R, keep, nprint, drawdelta, olddelta, a, oldprob, oldbetas, ind, SignRes, p_MH, MH_burnin, fix_p_burnin) {
+    .Call('_bayesm_rhierMnlRwMixture_slice_rcpp_loop', PACKAGE = 'bayesm', lgtdata, Z, deltabar, Ad, mubar, Amu, nu, V, s, R, keep, nprint, drawdelta, olddelta, a, oldprob, oldbetas, ind, SignRes, p_MH, MH_burnin, fix_p_burnin)
 }
 
 rhierMnlRwMixtureLogNormal_rcpp_loop <- function(lgtdata, Z, deltabar, Ad, mubar, Amu, nu, V, s, R, keep, nprint, drawdelta, olddelta, a, oldprob, oldbetas, ind, SignRes) {
