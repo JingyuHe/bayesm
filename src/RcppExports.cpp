@@ -398,8 +398,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // rhierMnlRwMixture_slice_rcpp_loop
-List rhierMnlRwMixture_slice_rcpp_loop(List const& lgtdata, mat const& Z, vec const& deltabar, mat const& Ad, mat const& mubar, mat const& Amu, double nu, mat const& V, double s, int R, int keep, int nprint, bool drawdelta, mat olddelta, vec const& a, vec oldprob, mat oldbetas, vec ind, vec const& SignRes, double p_MH);
-RcppExport SEXP _bayesm_rhierMnlRwMixture_slice_rcpp_loop(SEXP lgtdataSEXP, SEXP ZSEXP, SEXP deltabarSEXP, SEXP AdSEXP, SEXP mubarSEXP, SEXP AmuSEXP, SEXP nuSEXP, SEXP VSEXP, SEXP sSEXP, SEXP RSEXP, SEXP keepSEXP, SEXP nprintSEXP, SEXP drawdeltaSEXP, SEXP olddeltaSEXP, SEXP aSEXP, SEXP oldprobSEXP, SEXP oldbetasSEXP, SEXP indSEXP, SEXP SignResSEXP, SEXP p_MHSEXP) {
+List rhierMnlRwMixture_slice_rcpp_loop(List const& lgtdata, mat const& Z, vec const& deltabar, mat const& Ad, mat const& mubar, mat const& Amu, double nu, mat const& V, double s, int R, int keep, int nprint, bool drawdelta, mat olddelta, vec const& a, vec oldprob, mat oldbetas, vec ind, vec const& SignRes, double p_MH, bool MH_burnin);
+RcppExport SEXP _bayesm_rhierMnlRwMixture_slice_rcpp_loop(SEXP lgtdataSEXP, SEXP ZSEXP, SEXP deltabarSEXP, SEXP AdSEXP, SEXP mubarSEXP, SEXP AmuSEXP, SEXP nuSEXP, SEXP VSEXP, SEXP sSEXP, SEXP RSEXP, SEXP keepSEXP, SEXP nprintSEXP, SEXP drawdeltaSEXP, SEXP olddeltaSEXP, SEXP aSEXP, SEXP oldprobSEXP, SEXP oldbetasSEXP, SEXP indSEXP, SEXP SignResSEXP, SEXP p_MHSEXP, SEXP MH_burninSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -423,7 +423,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< vec >::type ind(indSEXP);
     Rcpp::traits::input_parameter< vec const& >::type SignRes(SignResSEXP);
     Rcpp::traits::input_parameter< double >::type p_MH(p_MHSEXP);
-    rcpp_result_gen = Rcpp::wrap(rhierMnlRwMixture_slice_rcpp_loop(lgtdata, Z, deltabar, Ad, mubar, Amu, nu, V, s, R, keep, nprint, drawdelta, olddelta, a, oldprob, oldbetas, ind, SignRes, p_MH));
+    Rcpp::traits::input_parameter< bool >::type MH_burnin(MH_burninSEXP);
+    rcpp_result_gen = Rcpp::wrap(rhierMnlRwMixture_slice_rcpp_loop(lgtdata, Z, deltabar, Ad, mubar, Amu, nu, V, s, R, keep, nprint, drawdelta, olddelta, a, oldprob, oldbetas, ind, SignRes, p_MH, MH_burnin));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -957,7 +958,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_bayesm_rhierMnlDP_rcpp_loop", (DL_FUNC) &_bayesm_rhierMnlDP_rcpp_loop, 18},
     {"_bayesm_llmnl_con", (DL_FUNC) &_bayesm_llmnl_con, 4},
     {"_bayesm_rhierMnlRwMixture_rcpp_loop", (DL_FUNC) &_bayesm_rhierMnlRwMixture_rcpp_loop, 19},
-    {"_bayesm_rhierMnlRwMixture_slice_rcpp_loop", (DL_FUNC) &_bayesm_rhierMnlRwMixture_slice_rcpp_loop, 20},
+    {"_bayesm_rhierMnlRwMixture_slice_rcpp_loop", (DL_FUNC) &_bayesm_rhierMnlRwMixture_slice_rcpp_loop, 21},
     {"_bayesm_rhierMnlRwMixtureLogNormal_rcpp_loop", (DL_FUNC) &_bayesm_rhierMnlRwMixtureLogNormal_rcpp_loop, 19},
     {"_bayesm_rhierMnlRwMixtureLogNormal_slice_rcpp_loop", (DL_FUNC) &_bayesm_rhierMnlRwMixtureLogNormal_slice_rcpp_loop, 20},
     {"_bayesm_rhierNegbinRw_rcpp_loop", (DL_FUNC) &_bayesm_rhierNegbinRw_rcpp_loop, 19},

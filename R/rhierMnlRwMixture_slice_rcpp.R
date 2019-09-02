@@ -1,4 +1,4 @@
-rhierMnlRwMixture_slice=function(Data,Prior,Mcmc, p_MH = 0){
+rhierMnlRwMixture_slice=function(Data,Prior,Mcmc, MH_burnin, p_MH = 0){
 #
 # revision history:
 #   12/04 changed by rossi to fix bug in drawdelta when there is zero/one unit in a mixture component
@@ -325,7 +325,7 @@ draws =  rhierMnlRwMixture_slice_rcpp_loop(lgtdata, Z,
                                      deltabar, Ad, mubar, Amu,
                                      nu, V, s,
                                      R, keep, nprint, drawdelta,
-                                     as.matrix(olddelta), a, oldprob, oldbetas, ind, SignRes, p_MH)
+                                     as.matrix(olddelta), a, oldprob, oldbetas, ind, SignRes, p_MH, MH_burnin)
 ####################################################################
 
 if(drawdelta){
