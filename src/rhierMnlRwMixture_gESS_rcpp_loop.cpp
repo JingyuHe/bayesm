@@ -274,7 +274,6 @@ List rhierMnlRwMixture_gESS_rcpp_loop(List const &lgtdata, mat const &Z,
             {
                 // generalized elliptical slice Sampler
                 mu_ellipse = betabar;
-                cov_ellipse = inv(rootpi * trans(rootpi));
 
                 // sampling s, generalized ESS
                 temp = vectorise(trans(rootpi) * (vectorise(oldbetas(lgt, span::all)) - mu_ellipse));
@@ -287,14 +286,19 @@ List rhierMnlRwMixture_gESS_rcpp_loop(List const &lgtdata, mat const &Z,
 
                 scale(rep, lgt) = lambda;
 
+                // cov_ellipse = inv(rootpi * trans(rootpi));
 
-                L = inv(rootpi * trans(rootpi));
+                // L = inv(rootpi * trans(rootpi));
                 // L * trans(L) = Sigma
-                L = chol(L, "lower");
+                // L = chol(L, "lower");
 
-                incroot = chol(cov_ellipse, "lower") * sqrt(lambda);
+                L = trans(inv(rootpi));
+                incroot = L * sqrt(lambda);
+                incroot_inv = rootpi / sqrt(lambda);
 
-                incroot_inv = chol(inv(cov_ellipse), "lower") / sqrt(lambda);
+                // incroot = chol(cov_ellipse, "lower") * sqrt(lambda);
+
+                // incroot_inv = chol(inv(cov_ellipse), "lower") / sqrt(lambda);
 
                 metropout_struct = gESS_draw_hierLogitMixture(lgtdata_vector[lgt].y, lgtdata_vector[lgt].X, vectorise(oldbetas(lgt, span::all)), betabar, L, oldll[lgt], incroot, incroot_inv, mu_ellipse, SignRes);
             }
