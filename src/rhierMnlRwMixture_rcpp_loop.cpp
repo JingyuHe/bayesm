@@ -117,10 +117,6 @@ List rhierMnlRwMixture_rcpp_loop(List const& lgtdata, mat const& Z,
 
 // Wayne Taylor 10/01/2014
 
-  cout << "--------------------" << endl;
-  cout << "Metropolis Hastings" << endl; 
-  cout << "--------------------" << endl;
-
   int nlgt = lgtdata.size();
   int nvar = V.n_cols;
   int nz = Z.n_cols;

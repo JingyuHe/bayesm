@@ -1,67 +1,8 @@
 #include "bayesm.h"
 
-//FUNCTION SPECIFIC TO MAIN FUNCTION------------------------------------------------------
-//[[Rcpp::export]]
-// double llmnl_con(vec const& betastar, vec const& y, mat const& X, vec const& SignRes = NumericVector::create(0)){
-
-//   // Wayne Taylor 7/8/2016
-
-//   // Evaluates log-likelihood for the multinomial logit model WITH SIGN CONSTRAINTS
-//   // NOTE: this is exported only because it is used in the shell .R function, it will not be available to users
-
-//   //Reparameterize betastar to beta to allow for sign restrictions
-//   vec beta = betastar;
-
-//   //The default SignRes vector is a single element vector containing a zero
-//   //any() returns true if any elements of SignRes are non-zero
-//   if(any(SignRes)){
-//     uvec signInd = find(SignRes != 0);
-//     beta.elem(signInd) = SignRes.elem(signInd) % exp(beta.elem(signInd));  //% performs element-wise multiplication
-//   }
-
-//   int n = y.size();
-//   int j = X.n_rows/n;
-//   mat Xbeta = X*beta;
-
-//   vec xby = zeros<vec>(n);
-//   vec denom = zeros<vec>(n);
-
-//   for(int i = 0; i<n;i++){
-//     for(int p=0;p<j;p++) denom[i]=denom[i]+exp(Xbeta[i*j+p]);
-//     xby[i] = Xbeta[i*j+y[i]-1];
-//   }
-
-//   return(sum(xby - log(denom)));
-// }
-
-//mnlRwMetropOnce=
-//function(y,X,oldbeta,oldll,s,inc.root,betabar,rootpi){
-//#
-//# function to execute rw metropolis for the MNL
-//# y is n vector with element = 1,...,j indicating which alt chosen
-//# X is nj x k matrix of xvalues for each of j alt on each of n occasions
-//# RW increments are N(0,s^2*t(inc.root)%*%inc.root)
-//# prior on beta is N(betabar,Sigma)  Sigma^-1=rootpi*t(rootpi)
-//#  inc.root, rootpi are upper triangular
-//#  this means that we are using the UL decomp of Sigma^-1 for prior
-//# oldbeta is the current
-//     stay=0
-//     betac=oldbeta + s*t(inc.root)%*%(matrix(rnorm(ncol(X)),ncol=1))
-//     cll=llmnl(betac,y,X)
-//     clpost=cll+lndMvn(betac,betabar,rootpi)
-//     ldiff=clpost-oldll-lndMvn(oldbeta,betabar,rootpi)
-//     alpha=min(1,exp(ldiff))
-//     if(alpha < 1) {unif=runif(1)} else {unif=0}
-//     if (unif <= alpha)
-//             {betadraw=betac; oldll=cll}
-//           else
-//             {betadraw=oldbeta; stay=1}
-//return(list(betadraw=betadraw,stay=stay,oldll=oldll))
-//}
-
-mnlMetropOnceOut mnlMetropOnce_conLogNormal(vec const &y, mat const &X, vec const &oldbeta,
-                                            double oldll, double s, mat const &incroot,
-                                            vec const &betabar, mat const &rootpi, vec const &SignRes = NumericVector::create(2))
+mnlMetropOnceOut mnlMetropOnce_con_MH_gESS(vec const &y, mat const &X, vec const &oldbeta,
+                                           double oldll, double s, mat const &incroot,
+                                           vec const &betabar, mat const &rootpi, vec const &SignRes = NumericVector::create(2))
 {
     // Wayne Taylor 10/01/2014
 
@@ -81,15 +22,13 @@ mnlMetropOnceOut mnlMetropOnce_conLogNormal(vec const &y, mat const &X, vec cons
 
     int stay = 0;
 
-    //   vec betac = oldbeta + s*trans(incroot)*as<vec>(rnorm(X.n_cols));
-    // random walk on log scale?
+    // Note trans(incroot) here
+    // The actual covariance is trans(incroot) * incroot = inv(H + Vb^{-1})
     vec betac = oldbeta + s * trans(incroot) * as<vec>(rnorm(X.n_cols));
 
     double cll = llmnl_con(betac, y, X, SignRes);
-    //   double clpost = cll+lndMvn(betac,betabar,rootpi);
-    //   double ldiff = clpost-oldll-lndMvn(oldbeta,betabar,rootpi);
-    double clpost = cll + lndLogMvn(betac, betabar, rootpi);
-    double ldiff = clpost - oldll - lndLogMvn(oldbeta, betabar, rootpi);
+    double clpost = cll + lndMvn(betac, betabar, rootpi);
+    double ldiff = clpost - oldll - lndMvn(oldbeta, betabar, rootpi);
     alphaminv << 1 << exp(ldiff);
     double alpha = min(alphaminv);
 
@@ -119,15 +58,92 @@ mnlMetropOnceOut mnlMetropOnce_conLogNormal(vec const &y, mat const &X, vec cons
     return (out_struct);
 }
 
+mnlMetropOnceOut gESS_draw_hierLogitMixture(vec const &y, mat const &X, vec const &beta_ini, vec const &beta_hat, mat const &rootpi, double oldll, mat const &incroot, mat const &incroot_inv, vec const &mu_ellipse, vec const &SignRes = NumericVector::create(2))
+{
+
+    /*
+    sample via elliptical slice sampler
+    Input : beta_ini, vector of initial value
+            beta_hat, mean of beta (likelihood function)
+            L, Cholesky factor (lower triangular LL' = Sigma) of covariance matrix of normal part
+  */
+    mnlMetropOnceOut out_struct;
+    // subtract mean from the initial value, sample the deviation from mean
+    vec beta = beta_ini - beta_hat;
+
+    // draw the auxillary vector
+    vec eps = arma::randn<vec>(incroot.n_cols);
+    vec nu = incroot * eps;
+
+    // compute the prior threshold
+    double u = as_scalar(randu<vec>(1));
+
+    double priorcomp = oldll; //llmnl_con(beta_ini, y, X, SignRes);
+
+    // cout << oldll << endl;
+    // cout << llmnl(beta_ini, y, X) << endl;
+
+    // double ly = priorcomp + log(u); // here is log likelihood
+
+    double ly = llmnl_con(beta_ini, y, X, SignRes) + lndMvn(beta_ini, beta_hat, rootpi) - lndMvst(beta_ini, 2.0, mu_ellipse, incroot_inv, false);
+
+    ly = ly + log(u);
+
+    // elliptical slice sampling
+    double thetaprop = as_scalar(randu<vec>(1)) * 2.0 * M_PI;
+    vec betaprop = beta * cos(thetaprop) + nu * sin(thetaprop);
+    double thetamin = thetaprop - 2.0 * M_PI;
+    double thetamax = thetaprop;
+
+    double compll;
+
+    compll = llmnl_con(betaprop + beta_hat, y, X, SignRes) + lndMvn(betaprop + beta_hat, beta_hat, rootpi) - lndMvst(betaprop + mu_ellipse, 2.0, mu_ellipse, incroot_inv, false);
+
+    while (compll < ly)
+    {
+        // count ++ ;
+
+        if (thetaprop < 0)
+        {
+            thetamin = thetaprop;
+        }
+        else
+        {
+            thetamax = thetaprop;
+        }
+
+        // runif(thetamin, thetamax)
+        thetaprop = as_scalar(randu<vec>(1)) * (thetamax - thetamin) + thetamin;
+
+        betaprop = beta * cos(thetaprop) + nu * sin(thetaprop);
+
+        compll = llmnl_con(betaprop + beta_hat, y, X, SignRes) + lndMvn(betaprop + beta_hat, beta_hat, rootpi) - lndMvst(betaprop + mu_ellipse, 2.0, mu_ellipse, incroot_inv, false);
+    }
+
+    // accept the proposal
+    beta = betaprop;
+
+    oldll = compll;
+    // cout << "saved value " << oldll << endl;
+    // cout << "-----" << endl;
+    // add the mean back
+    out_struct.betadraw = beta + beta_hat;
+    out_struct.oldll = oldll;
+    return out_struct;
+}
+
 //MAIN FUNCTION-------------------------------------------------------------------------------------
 
 //[[Rcpp::export]]
-List rhierMnlRwMixtureLogNormal_rcpp_loop(List const &lgtdata, mat const &Z,
-                                          vec const &deltabar, mat const &Ad, mat const &mubar, mat const &Amu,
-                                          double nu, mat const &V, double s,
-                                          int R, int keep, int nprint, bool drawdelta,
-                                          mat olddelta, vec const &a, vec oldprob, mat oldbetas, vec ind, vec const &SignRes)
+List rhierMnlRwMixture_gESS_rcpp_loop(List const &lgtdata, mat const &Z,
+                                      vec const &deltabar, mat const &Ad, mat const &mubar, mat const &Amu,
+                                      double nu, mat const &V, double s,
+                                      int R, int keep, int nprint, bool drawdelta,
+                                      mat olddelta, vec const &a, vec oldprob, mat oldbetas, vec ind, vec const &SignRes, double p_MH, bool MH_burnin, bool fix_p_burnin)
 {
+    cout << "--------------------" << endl;
+    cout << "mixture of MH and slice sampler" << endl;
+    cout << "--------------------" << endl;
 
     // Wayne Taylor 10/01/2014
 
@@ -135,7 +151,7 @@ List rhierMnlRwMixtureLogNormal_rcpp_loop(List const &lgtdata, mat const &Z,
     int nvar = V.n_cols;
     int nz = Z.n_cols;
 
-    mat rootpi, betabar, ucholinv, incroot;
+    mat rootpi, betabar, ucholinv, incroot, L;
     int mkeep;
     mnlMetropOnceOut metropout_struct;
     List lgtdatai, nmix;
@@ -163,14 +179,24 @@ List rhierMnlRwMixtureLogNormal_rcpp_loop(List const &lgtdata, mat const &Z,
         Deltadraw.zeros(R / keep, nz * nvar); //enlarge Deltadraw only if the space is required
     List compdraw(R / keep);
 
-    // initialize beta at a positive value
-    betadraw.fill(0.1);
-    oldbetas.fill(0.1);
+
+    mat Sigma;
     vec mu_ellipse;
     mat cov_ellipse;
-    mat Sigma;
+    mat incroot_inv;
+
+    double ss1;
+    double ss2;
+    vec temp;
+    double lambda;
+    double ss = 2; 
+
+    mat scale = zeros<mat>(R, nlgt);
+
     if (nprint > 0)
         startMcmcTimer();
+
+    // cout << "old probs" << oldprob << endl;
 
     for (int rep = 0; rep < R; rep++)
     {
@@ -181,11 +207,26 @@ List rhierMnlRwMixtureLogNormal_rcpp_loop(List const &lgtdata, mat const &Z,
         if (drawdelta)
         {
             olddelta.reshape(nvar, nz);
-            mgout = rmixGibbs(log(oldbetas) - Z * trans(olddelta), mubar, Amu, nu, V, a, oldprob, ind);
+
+            if (rep < 2000)
+            {
+                mgout = rmixGibbs_fix_p(oldbetas - Z * trans(olddelta), mubar, Amu, nu, V, a, oldprob, ind);
+            }
+            else
+            {
+                mgout = rmixGibbs(oldbetas - Z * trans(olddelta), mubar, Amu, nu, V, a, oldprob, ind);
+            }
         }
         else
         {
-            mgout = rmixGibbs(log(oldbetas), mubar, Amu, nu, V, a, oldprob, ind);
+            if (rep < 2000)
+            {
+                mgout = rmixGibbs_fix_p(oldbetas, mubar, Amu, nu, V, a, oldprob, ind);
+            }
+            else
+            {
+                mgout = rmixGibbs(oldbetas, mubar, Amu, nu, V, a, oldprob, ind);
+            }
         }
 
         List oldcomp = mgout["comps"];
@@ -194,20 +235,20 @@ List rhierMnlRwMixtureLogNormal_rcpp_loop(List const &lgtdata, mat const &Z,
 
         //now draw delta | {beta_i}, ind, comps
         if (drawdelta)
-            olddelta = drawDelta(Z, log(oldbetas), ind, oldcomp, deltabar, Ad);
+            olddelta = drawDelta(Z, oldbetas, ind, oldcomp, deltabar, Ad);
 
         //loop over all LGT equations drawing beta_i | ind[i],z[i,],mu[ind[i]],rooti[ind[i]]
         for (int lgt = 0; lgt < nlgt; lgt++)
         {
             List oldcomplgt = oldcomp[ind[lgt] - 1];
+
+            // rooti * trans(rooti) = sigma^{-1}  !!! cholesky root of sigma Inverse
             rootpi = as<mat>(oldcomplgt[1]);
 
             //note: beta_i = Delta*z_i + u_i  Delta is nvar x nz
             if (drawdelta)
             {
                 olddelta.reshape(nvar, nz);
-
-                // actually this is betabar in log
                 betabar = as<vec>(oldcomplgt[0]) + olddelta * vectorise(Z(lgt, span::all));
             }
             else
@@ -218,36 +259,45 @@ List rhierMnlRwMixtureLogNormal_rcpp_loop(List const &lgtdata, mat const &Z,
             if (rep == 0)
                 oldll[lgt] = llmnl_con(vectorise(oldbetas(lgt, span::all)), lgtdata_vector[lgt].y, lgtdata_vector[lgt].X, SignRes);
 
-            //compute inc.root
-
-
-            Sigma = inv(rootpi * trans(rootpi));
-
-            if (1)
+            if (rep < 2000 && MH_burnin)
             {
+                // burnin period, MH
                 // ucholinv * trans(ucholinv) = inv(H + Vb^{-1})
                 ucholinv = solve(trimatu(chol(lgtdata_vector[lgt].hess + rootpi * trans(rootpi))), eye(nvar, nvar)); //trimatu interprets the matrix as upper triangular and makes solve more efficient
 
                 // t(incroot) * incroot = inv(H + Vb^{-1})
                 incroot = chol(ucholinv * trans(ucholinv));
+
+                metropout_struct = mnlMetropOnce_con_MH_gESS(lgtdata_vector[lgt].y, lgtdata_vector[lgt].X, vectorise(oldbetas(lgt, span::all)), oldll[lgt], s, incroot, betabar, rootpi, SignRes);
             }
             else
             {
-                // expectation and covariance of the proposal ellipse
-                // mu_ellipse = exp(betabar + Sigma.diag() / 2.0);
+                // generalized elliptical slice Sampler
+                mu_ellipse = betabar;
+                cov_ellipse = inv(rootpi * trans(rootpi));
 
-                // mode of lognormal
-                mu_ellipse = exp(betabar - Sigma * ones(Sigma.n_rows, 1));
+                // sampling s, generalized ESS
+                temp = vectorise(trans(rootpi) * (vectorise(oldbetas(lgt, span::all)) - mu_ellipse));
 
-                // % is elementwise multiplication
-                // cov_ellipse = (mu_ellipse * trans(mu_ellipse)) % (exp(Sigma) - ones(Sigma.n_rows, Sigma.n_cols));
+                ss1 = (ss + betabar.n_elem) / 2.0;
+                ss2 = (0.5 * (ss + (trans(temp) * temp)))[0];
 
-                cov_ellipse = Sigma;
+                // draw scale parameter from inverse gamma
+                lambda = 1.0 / randg<vec>(1, distr_param(ss1, 1.0 / ss2))[0];
 
-                incroot = chol(cov_ellipse, "lower");
+                scale(rep, lgt) = lambda;
+
+
+                L = inv(rootpi * trans(rootpi));
+                // L * trans(L) = Sigma
+                L = chol(L, "lower");
+
+                incroot = chol(cov_ellipse, "lower") * sqrt(lambda);
+
+                incroot_inv = chol(inv(cov_ellipse), "lower") / sqrt(lambda);
+
+                metropout_struct = gESS_draw_hierLogitMixture(lgtdata_vector[lgt].y, lgtdata_vector[lgt].X, vectorise(oldbetas(lgt, span::all)), betabar, L, oldll[lgt], incroot, incroot_inv, mu_ellipse, SignRes);
             }
-
-            metropout_struct = mnlMetropOnce_conLogNormal(lgtdata_vector[lgt].y, lgtdata_vector[lgt].X, vectorise(oldbetas(lgt, span::all)), oldll[lgt], s, incroot, betabar, rootpi, SignRes);
 
             oldbetas(lgt, span::all) = trans(metropout_struct.betadraw);
             oldll[lgt] = metropout_struct.oldll;
@@ -309,7 +359,8 @@ List rhierMnlRwMixtureLogNormal_rcpp_loop(List const &lgtdata, mat const &Z,
             Named("betadraw") = betadraw,
             Named("nmix") = nmix,
             Named("loglike") = loglike,
-            Named("SignRes") = SignRes));
+            Named("SignRes") = SignRes,
+            Named("scale_of_gESS") = scale));
     }
     else
     {
@@ -317,6 +368,7 @@ List rhierMnlRwMixtureLogNormal_rcpp_loop(List const &lgtdata, mat const &Z,
             Named("betadraw") = betadraw,
             Named("nmix") = nmix,
             Named("loglike") = loglike,
-            Named("SignRes") = SignRes));
+            Named("SignRes") = SignRes,
+            Named("scale_of_gESS") = scale));
     }
 }
