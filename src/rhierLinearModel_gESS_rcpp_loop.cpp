@@ -15,7 +15,7 @@ double log_likelihood_reg_gESS(vec const &y, mat const &X, vec const &beta, doub
   return output;
 }
 
-unireg gESS_draw_hierLinearModel2(vec const &y, mat const &X, vec const &beta_ini, vec const &beta_hat, double tau, mat const &incroot, mat const &incroot_inv, vec const &mu_ellipse)
+unireg gESS_draw_hierLinearModel(vec const &y, mat const &X, vec const &beta_ini, vec const &beta_hat, double tau, mat const &incroot, mat const &incroot_inv, vec const &mu_ellipse, mat const& rootpi)
 {
 
   /*
@@ -34,7 +34,7 @@ unireg gESS_draw_hierLinearModel2(vec const &y, mat const &X, vec const &beta_in
   // compute the prior threshold
   double u = as_scalar(randu<vec>(1));
 
-  double priorcomp = log_likelihood_reg_gESS(y, X, beta_ini, tau) - lndMvst(beta_ini, 2.0, mu_ellipse, incroot_inv, false);
+  double priorcomp = log_likelihood_reg_gESS(y, X, beta_ini, tau) + lndMvn(beta_ini, beta_hat, rootpi) - lndMvst(beta_ini, 2.0, mu_ellipse, incroot_inv, false);
 
   double ly = priorcomp + log(u); // here is log likelihood
 
@@ -46,7 +46,7 @@ unireg gESS_draw_hierLinearModel2(vec const &y, mat const &X, vec const &beta_in
 
   double compll;
 
-  compll = log_likelihood_reg_gESS(y, X, betaprop + mu_ellipse, tau) - lndMvst(betaprop + mu_ellipse, 2.0, mu_ellipse, incroot_inv, false);
+  compll = log_likelihood_reg_gESS(y, X, betaprop + mu_ellipse, tau) + lndMvn(betaprop + mu_ellipse, beta_hat, rootpi) - lndMvst(betaprop + mu_ellipse, 2.0, mu_ellipse, incroot_inv, false);
 
   while (compll < ly)
   {
@@ -66,7 +66,7 @@ unireg gESS_draw_hierLinearModel2(vec const &y, mat const &X, vec const &beta_in
 
     betaprop = beta * cos(thetaprop) + nu * sin(thetaprop);
 
-    compll = log_likelihood_reg_gESS(y, X, betaprop + mu_ellipse, tau) - lndMvst(betaprop + mu_ellipse, 2.0, mu_ellipse, incroot_inv, false);
+    compll = log_likelihood_reg_gESS(y, X, betaprop + mu_ellipse, tau) + lndMvn(betaprop + mu_ellipse, beta_hat, rootpi) - lndMvst(betaprop + mu_ellipse, 2.0, mu_ellipse, incroot_inv, false);
   }
 
   // accept the proposal
@@ -192,22 +192,18 @@ List rhierLinearModel_gESS_rcpp_loop(List const &regdata, mat const &Z, mat cons
 
     betabar = Z * Delta;
     Abetabar = Abeta * trans(betabar);
-
     // loop over all regressions
     // can be replaced by elliptical slice sampler
-    // the ellipce is defined as N(Zdelta_i, Vbeta)
+    // the ellipce is defined as N(Zdelta_i, lambda * Vbeta)
     for (reg = 0; reg < nreg; reg++)
     {
 
-      mu_ellipse = betabar;
+      mu_ellipse = trans(betabar(reg, span::all));
 
       incroot = chol(Vbeta, "lower");
       incroot_inv = trans(inv(incroot));
-
-
-
       temp = vectorise(incroot_inv * (vectorise(oldbetas(reg, span::all)) - mu_ellipse));
-      ss1 = (ss + betabar.n_elem) / 2.0;
+      ss1 = (ss + mu_ellipse.n_elem) / 2.0;
       ss2 = (0.5 * (ss + (trans(temp) * temp)))[0];
 
       lambda = 1.0 / randg<vec>(1, distr_param(ss1, 1.0 / ss2))[0];
@@ -216,10 +212,9 @@ List rhierLinearModel_gESS_rcpp_loop(List const &regdata, mat const &Z, mat cons
       incroot_inv = incroot_inv / sqrt(lambda);
 
       // sampling beta
-      regout_struct = gESS_draw_hierLinearModel2(regdata_vector[reg].y, regdata_vector[reg].X, trans(oldbetas(reg, span::all)), trans(betabar(reg, span::all)), oldtau[reg], incroot, incroot_inv, mu_ellipse);
+      regout_struct = gESS_draw_hierLinearModel(regdata_vector[reg].y, regdata_vector[reg].X, trans(oldbetas(reg, span::all)), trans(betabar(reg, span::all)), oldtau[reg], incroot, incroot_inv, mu_ellipse, incroot_inv);
 
       betas(reg, span::all) = trans(regout_struct.beta);
-
       // sampling tau
       s = sum(square(regdata_vector[reg].y - regdata_vector[reg].X * regout_struct.beta));
       tau[reg] = (s + nu_e * ssq[reg]) / rchisq(1, nu_e + regdata_vector[reg].y.n_elem)[0]; //rchisq returns a vectorized object, so using [0] allows for the conversion to double

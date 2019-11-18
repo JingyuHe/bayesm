@@ -195,15 +195,9 @@ List rhierLinearModel_slice_rcpp_loop(List const &regdata, mat const &Z, mat con
 
       L = chol(Vbeta, "lower");
 
-      // unireg ESS_draw_hierLogitMixture(vec const &y, mat const &X, vec const &beta_ini, vec const &beta_hat, mat const &L, double oldll)
-      // regout_struct = runiregG(regdata_vector[reg].y, regdata_vector[reg].X,
-      //                          regdata_vector[reg].XpX, regdata_vector[reg].Xpy,
-      //                          tau[reg], Abeta, Abetabar(span::all, reg),
-      //                          nu_e, ssq[reg]);
-      // betas(reg, span::all) = trans(regout_struct.beta);
-      // tau[reg] = regout_struct.sigmasq;
-
-      // sampling beta
+      // sampling beta by elliptical slice sampler
+      // center at N(Zdelta, Vbeta), evaluate likelihood of N(Xbeta, sigma^2) of linear regression
+      // loop over all regression models
       regout_struct = ESS_draw_hierLinearModel(regdata_vector[reg].y, regdata_vector[reg].X, trans(oldbetas(reg, span::all)), trans(betabar(reg, span::all)), L, oldtau[reg]);
 
       betas(reg, span::all) = trans(regout_struct.beta);
