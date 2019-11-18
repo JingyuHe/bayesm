@@ -10,7 +10,10 @@ double log_likelihood_reg(vec const &y, mat const &X, vec const &beta, double si
   for (size_t i = 0; i < n; i++)
   {
     // loop over all data
-    output = output - 0.5 * log(2 * M_PI) - log(sigma2) - 0.5 * pow(y(i) - Xbeta(i, 0), 2) / sigma2;
+    // output = output - 0.5 * log(2 * M_PI) - log(sigma2) - 0.5 * pow(y(i) - Xbeta(i, 0), 2) / sigma2;
+
+    // ignore constant
+    output = output - 0.5 * pow(y(i) - Xbeta(i, 0), 2) / sigma2;
 
   }
   return output;
@@ -180,8 +183,9 @@ List rhierLinearModel_slice_rcpp_loop(List const &regdata, mat const &Z, mat con
   for (int rep = 0; rep < R; rep++)
   {
 
+    L = chol(Vbeta, "lower");
     // compute the inverse of Vbeta
-    ucholinv = solve(trimatu(chol(Vbeta)), eye(nvar, nvar)); //trimatu interprets the matrix as upper triangular and makes solve more efficient
+    ucholinv = solve(trimatu(trans(L)), eye(nvar, nvar)); //trimatu interprets the matrix as upper triangular and makes solve more efficient
     Abeta = ucholinv * trans(ucholinv);
 
     betabar = Z * Delta;
@@ -192,9 +196,6 @@ List rhierLinearModel_slice_rcpp_loop(List const &regdata, mat const &Z, mat con
     // the ellipce is defined as N(Zdelta_i, Vbeta)
     for (reg = 0; reg < nreg; reg++)
     {
-
-      L = chol(Vbeta, "lower");
-
       // sampling beta by elliptical slice sampler
       // center at N(Zdelta, Vbeta), evaluate likelihood of N(Xbeta, sigma^2) of linear regression
       // loop over all regression models

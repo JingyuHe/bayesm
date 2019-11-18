@@ -10,7 +10,10 @@ double log_likelihood_reg_gESS(vec const &y, mat const &X, vec const &beta, doub
   for (size_t i = 0; i < n; i++)
   {
     // loop over all data
-    output = output - 0.5 * log(2 * M_PI) - log(sigma2) - 0.5 * pow(y(i) - Xbeta(i, 0), 2) / sigma2;
+    // output = output - 0.5 * log(2 * M_PI) - log(sigma2) - 0.5 * pow(y(i) - Xbeta(i, 0), 2) / sigma2;
+
+    // ignore constant
+    output = output - 0.5 * pow(y(i) - Xbeta(i, 0), 2) / sigma2;
   }
   return output;
 }
@@ -19,10 +22,16 @@ unireg gESS_draw_hierLinearModel(vec const &y, mat const &X, vec const &beta_ini
 {
 
   /*
-    sample via elliptical slice sampler
+    sample via generalized elliptical slice sampler
     Input : beta_ini, vector of initial value
             beta_hat, mean of beta (likelihood function)
-            L, Cholesky factor (lower triangular LL' = Sigma) of covariance matrix of normal part
+            
+            the ellipse is N(mu_ellipse, Omgea)
+            where Omega = incroot * trans(incroot)
+            Omega^{-1} = incroot_inv * trans(incroot_inv)
+
+            the target distribution here is N(y; beta X, sigma^2) N(B; ZDelta, V_beta)
+            and V_beta = rootpi * trans(rootpi)
     */
   unireg out_struct;
   // subtract mean from the initial value, sample the deviation from mean
@@ -139,6 +148,9 @@ List rhierLinearModel_gESS_rcpp_loop(List const &regdata, mat const &Z, mat cons
   List regdatai, rmregout;
   unireg regout_struct;
 
+  mat incroot_use;
+  mat ucholinv_use;
+
   int nreg = regdata.size();
   int nvar = V.n_cols;
   int nz = Z.n_cols;
@@ -187,37 +199,39 @@ List rhierLinearModel_gESS_rcpp_loop(List const &regdata, mat const &Z, mat cons
   {
 
     // compute the inverse of Vbeta
-    ucholinv = solve(trimatu(chol(Vbeta)), eye(nvar, nvar)); //trimatu interprets the matrix as upper triangular and makes solve more efficient
-    Abeta = ucholinv * trans(ucholinv);
+    incroot = chol(Vbeta, "lower");
+
+    ucholinv = solve(trimatu(trans(incroot)), eye(nvar, nvar)); //trimatu interprets the matrix as upper triangular and makes solve more efficient
 
     betabar = Z * Delta;
-    Abetabar = Abeta * trans(betabar);
+
+
+    // Abeta = ucholinv * trans(ucholinv);
+    // Abetabar = Abeta * trans(betabar);
+    
     // loop over all regressions
     // can be replaced by elliptical slice sampler
     // the ellipce is defined as N(Zdelta_i, lambda * Vbeta)
     for (reg = 0; reg < nreg; reg++)
     {
 
-      mu_ellipse = trans(betabar(reg, span::all));
+        // sampling residual term of elliptical slice sampler
+        mu_ellipse = trans(betabar(reg, span::all));
+        temp = vectorise(ucholinv * (vectorise(oldbetas(reg, span::all)) - mu_ellipse));
+        ss1 = (ss + mu_ellipse.n_elem) / 2.0;
+        ss2 = (0.5 * (ss + (trans(temp) * temp)))[0];
+        lambda = 1.0 / randg<vec>(1, distr_param(ss1, 1.0 / ss2))[0];
 
-      incroot = chol(Vbeta, "lower");
-      incroot_inv = trans(inv(incroot));
-      temp = vectorise(incroot_inv * (vectorise(oldbetas(reg, span::all)) - mu_ellipse));
-      ss1 = (ss + mu_ellipse.n_elem) / 2.0;
-      ss2 = (0.5 * (ss + (trans(temp) * temp)))[0];
+        incroot_use = incroot * sqrt(lambda);
+        ucholinv_use = ucholinv / sqrt(lambda);
 
-      lambda = 1.0 / randg<vec>(1, distr_param(ss1, 1.0 / ss2))[0];
+        // sampling beta
+        regout_struct = gESS_draw_hierLinearModel(regdata_vector[reg].y, regdata_vector[reg].X, trans(oldbetas(reg, span::all)), trans(betabar(reg, span::all)), oldtau[reg], incroot_use, ucholinv_use, mu_ellipse, ucholinv_use);
 
-      incroot = incroot * sqrt(lambda);
-      incroot_inv = incroot_inv / sqrt(lambda);
-
-      // sampling beta
-      regout_struct = gESS_draw_hierLinearModel(regdata_vector[reg].y, regdata_vector[reg].X, trans(oldbetas(reg, span::all)), trans(betabar(reg, span::all)), oldtau[reg], incroot, incroot_inv, mu_ellipse, incroot_inv);
-
-      betas(reg, span::all) = trans(regout_struct.beta);
-      // sampling tau
-      s = sum(square(regdata_vector[reg].y - regdata_vector[reg].X * regout_struct.beta));
-      tau[reg] = (s + nu_e * ssq[reg]) / rchisq(1, nu_e + regdata_vector[reg].y.n_elem)[0]; //rchisq returns a vectorized object, so using [0] allows for the conversion to double
+        betas(reg, span::all) = trans(regout_struct.beta);
+        // sampling tau
+        s = sum(square(regdata_vector[reg].y - regdata_vector[reg].X * regout_struct.beta));
+        tau[reg] = (s + nu_e * ssq[reg]) / rchisq(1, nu_e + regdata_vector[reg].y.n_elem)[0]; //rchisq returns a vectorized object, so using [0] allows for the conversion to double
     }
 
     //draw Vbeta, Delta | {beta_i}
