@@ -10,7 +10,9 @@ double log_likelihood_reg2(vec const &y, mat const &X, vec const &beta, double s
     for (size_t i = 0; i < n; i++)
     {
         // loop over all data
-        output = output - 0.5 * log(2 * M_PI) - log(sigma2) - 0.5 * pow(y(i) - Xbeta(i, 0), 2) / sigma2;
+        // output = output - 0.5 * log(2 * M_PI) - log(sigma2) - 0.5 * pow(y(i) - Xbeta(i, 0), 2) / sigma2;
+        // ignore constants
+        output = output - 0.5 * pow(y(i) - Xbeta(i, 0), 2) / sigma2;
     }
     return output;
 }
@@ -169,19 +171,17 @@ List rhierLinearMixture_slice_rcpp_loop(List const &regdata, mat const &Z,
                 betabar = as<vec>(oldcompreg[0]);
             }
 
-            Abeta = trans(rootpi) * rootpi;
-            Abetabar = Abeta * betabar;
+            // I think this is a bug
+            // Abeta = trans(rootpi) * rootpi;
 
-            // runiregout_struct = runiregG(regdata_vector[reg].y, regdata_vector[reg].X,
-            //                              regdata_vector[reg].XpX, regdata_vector[reg].Xpy,
-            //                              tau[reg], Abeta, Abetabar, nu_e, ssq[reg]);
+            // Abeta = rootpi * trans(rootpi);
+            // Abetabar = Abeta * betabar;
 
-            // oldbetas(reg, span::all) = trans(runiregout_struct.beta);
-            // tau[reg] = runiregout_struct.sigmasq;
-            L = inv(rootpi * trans(rootpi));
+
+            L = trans(inv(rootpi));
 
             // L * trans(L) = Sigma
-            L = chol(L, "lower");
+            // L = chol(L, "lower");
             // cout <<  trans(oldbetas(reg, span::all)) << endl;
             // cout << trans(betabar(reg, span::all)) << endl;
 

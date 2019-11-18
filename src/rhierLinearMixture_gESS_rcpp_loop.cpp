@@ -182,34 +182,23 @@ List rhierLinearMixture_gESS_rcpp_loop(List const &regdata, mat const &Z,
 
 
             // Abeta = Vbeta^{-1} inverse
-            Abeta = trans(rootpi) * rootpi;
-            Abetabar = Abeta * betabar;
+            // Abeta = trans(rootpi) * rootpi;
+            // Abeta = rootpi * trans(rootpi);
+            // Abetabar = Abeta * betabar;
 
-            // runiregout_struct = runiregG(regdata_vector[reg].y, regdata_vector[reg].X,
-            //                              regdata_vector[reg].XpX, regdata_vector[reg].Xpy,
-            //                              tau[reg], Abeta, Abetabar, nu_e, ssq[reg]);
-
-            // oldbetas(reg, span::all) = trans(runiregout_struct.beta);
-            // tau[reg] = runiregout_struct.sigmasq;
-            // L = inv(rootpi * trans(rootpi));
-
-            // L * trans(L) = Sigma
-            // L = chol(L, "lower");
-            // cout <<  trans(oldbetas(reg, span::all)) << endl;
-            // cout << trans(betabar(reg, span::all)) << endl;
-
-            mu_ellipse = betabar;
-
-            temp = vectorise(trans(rootpi) * (vectorise(oldbetas(reg, span::all)) - mu_ellipse));
+            temp = vectorise(rootpi * (vectorise(oldbetas(reg, span::all)) - betabar));
             ss1 = (ss + betabar.n_elem) / 2.0;
             ss2 = (0.5 * (ss + (trans(temp) * temp)))[0];
 
             lambda = 1.0 / randg<vec>(1, distr_param(ss1, 1.0 / ss2))[0];
-cout << "lambda " << endl;
+
             incroot = trans(inv(rootpi)) * sqrt(lambda);
+            // incroot = inv(rootpi) * sqrt(lambda);
+
+            // incroot_inv = rootpi / sqrt(lambda);
             incroot_inv = rootpi / sqrt(lambda);
 
-            runiregout_struct = gESS_draw_hierLinearMixture(regdata_vector[reg].y, regdata_vector[reg].X, trans(oldbetas(reg, span::all)), betabar, tau[reg], incroot, incroot_inv, mu_ellipse, incroot_inv);
+            runiregout_struct = gESS_draw_hierLinearMixture(regdata_vector[reg].y, regdata_vector[reg].X, trans(oldbetas(reg, span::all)), betabar, tau[reg], incroot, incroot_inv, betabar, incroot_inv);
 
             oldbetas(reg, span::all) = trans(runiregout_struct.beta);
 
