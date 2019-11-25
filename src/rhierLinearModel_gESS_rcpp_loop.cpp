@@ -226,7 +226,7 @@ List rhierLinearModel_gESS_rcpp_loop(List const &regdata, mat const &Z, mat cons
         ucholinv_use = ucholinv / sqrt(lambda);
 
         // sampling beta
-        regout_struct = gESS_draw_hierLinearModel(regdata_vector[reg].y, regdata_vector[reg].X, trans(oldbetas(reg, span::all)), trans(betabar(reg, span::all)), oldtau[reg], incroot_use, ucholinv_use, mu_ellipse, ucholinv_use);
+        regout_struct = gESS_draw_hierLinearModel(regdata_vector[reg].y, regdata_vector[reg].X, trans(oldbetas(reg, span::all)), trans(betabar(reg, span::all)), oldtau[reg], incroot_use, ucholinv_use, mu_ellipse, ucholinv);
 
         betas(reg, span::all) = trans(regout_struct.beta);
         // sampling tau

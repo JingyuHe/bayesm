@@ -84,7 +84,7 @@ mnlMetropOnceOut mnlMetropOnce_con_MH(vec const &y, mat const &X, vec const &old
     int stay = 0;
 
     // Note trans(incroot) here
-    // The actual covariance is trans(incroot) * incroot = inv(H + Vb^{-1})
+    // The actual covariance is incroot * trans(incroot) = inv(H + Vb^{-1})
     vec betac = oldbeta + s * trans(incroot) * as<vec>(rnorm(X.n_cols));
 
     double cll = llmnl_con(betac, y, X, SignRes);

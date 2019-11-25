@@ -198,7 +198,7 @@ List rhierLinearMixture_gESS_rcpp_loop(List const &regdata, mat const &Z,
             // incroot_inv = rootpi / sqrt(lambda);
             incroot_inv = rootpi / sqrt(lambda);
 
-            runiregout_struct = gESS_draw_hierLinearMixture(regdata_vector[reg].y, regdata_vector[reg].X, trans(oldbetas(reg, span::all)), betabar, tau[reg], incroot, incroot_inv, betabar, incroot_inv);
+            runiregout_struct = gESS_draw_hierLinearMixture(regdata_vector[reg].y, regdata_vector[reg].X, trans(oldbetas(reg, span::all)), betabar, tau[reg], incroot, incroot_inv, betabar, rootpi);
 
             oldbetas(reg, span::all) = trans(runiregout_struct.beta);
 

@@ -77,7 +77,10 @@ List rhierLinearMixture_rcpp_loop(List const& regdata, mat const& Z,
       
         // bug ??? !!!
         // Abeta = trans(rootpi)*rootpi;
-
+// cout << " -------- " << endl;
+// cout << trans(rootpi)*rootpi << endl;
+// cout << " ++++++++ " << endl;
+// cout << rootpi * trans(rootpi) << endl;
         Abeta = rootpi * trans(rootpi);
         Abetabar = Abeta*betabar;
 

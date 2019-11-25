@@ -80,6 +80,9 @@ mnlMetropOnceOut mnlMetropOnce_con(vec const& y, mat const& X, vec const& oldbet
   vec betadraw, alphaminv;
   
   int stay = 0;
+
+  // be careful, incroot takes transpose here
+  // incroot * t(incroot) = H, therefore we need to transpose it 
   vec betac = oldbeta + s*trans(incroot)*as<vec>(rnorm(X.n_cols));
   double cll = llmnl_con(betac,y,X,SignRes);
   double clpost = cll+lndMvn(betac,betabar,rootpi);

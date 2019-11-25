@@ -300,7 +300,7 @@ List rhierMnlRwMixture_gESS_rcpp_loop(List const &lgtdata, mat const &Z,
 
                 // incroot_inv = chol(inv(cov_ellipse), "lower") / sqrt(lambda);
 
-                metropout_struct = gESS_draw_hierLogitMixture(lgtdata_vector[lgt].y, lgtdata_vector[lgt].X, vectorise(oldbetas(lgt, span::all)), betabar, L, oldll[lgt], incroot, incroot_inv, mu_ellipse, SignRes);
+                metropout_struct = gESS_draw_hierLogitMixture(lgtdata_vector[lgt].y, lgtdata_vector[lgt].X, vectorise(oldbetas(lgt, span::all)), betabar, rootpi, oldll[lgt], incroot, incroot_inv, mu_ellipse, SignRes);
             }
 
             oldbetas(lgt, span::all) = trans(metropout_struct.betadraw);
