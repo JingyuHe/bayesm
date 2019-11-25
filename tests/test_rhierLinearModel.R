@@ -99,11 +99,9 @@ if(0){
   plot(out2$Deltadraw)
 }
 
-
-effectiveSize(out1$betadraw[1,1,])
-effectiveSize(out2$betadraw[1,1,])
-effectiveSize(out3$betadraw[1,1,])
-
+mean(apply(out1$betadraw, c(1,2), effectiveSize))
+mean(apply(out2$betadraw, c(1,2), effectiveSize))
+mean(apply(out3$betadraw, c(1,2), effectiveSize))
 
 t1
 t2

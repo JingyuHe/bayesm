@@ -148,8 +148,8 @@ List rhierLinearModel_gESS_rcpp_loop(List const &regdata, mat const &Z, mat cons
   List regdatai, rmregout;
   unireg regout_struct;
 
-  mat incroot_use;
-  mat ucholinv_use;
+  mat incroot_ellipse;
+  mat ucholinv_ellipse;
 
   int nreg = regdata.size();
   int nvar = V.n_cols;
@@ -199,6 +199,7 @@ List rhierLinearModel_gESS_rcpp_loop(List const &regdata, mat const &Z, mat cons
   {
 
     // compute the inverse of Vbeta
+    // incroot * trans*incroot = Vbeta
     incroot = chol(Vbeta, "lower");
 
     ucholinv = solve(trimatu(trans(incroot)), eye(nvar, nvar)); //trimatu interprets the matrix as upper triangular and makes solve more efficient
@@ -217,16 +218,19 @@ List rhierLinearModel_gESS_rcpp_loop(List const &regdata, mat const &Z, mat cons
 
         // sampling residual term of elliptical slice sampler
         mu_ellipse = trans(betabar(reg, span::all));
-        temp = vectorise(ucholinv * (vectorise(oldbetas(reg, span::all)) - mu_ellipse));
+
+        // temp = rootpi' * X
+        // trans(temp) * temp = X' * rootpi * rootpi' * X = X' * Sigma^{-1} * X
+        temp = vectorise(trans(ucholinv) * (vectorise(oldbetas(reg, span::all)) - mu_ellipse));
         ss1 = (ss + mu_ellipse.n_elem) / 2.0;
         ss2 = (0.5 * (ss + (trans(temp) * temp)))[0];
         lambda = 1.0 / randg<vec>(1, distr_param(ss1, 1.0 / ss2))[0];
 
-        incroot_use = incroot * sqrt(lambda);
-        ucholinv_use = ucholinv / sqrt(lambda);
+        incroot_ellipse = incroot * sqrt(lambda);
+        ucholinv_ellipse = ucholinv / sqrt(lambda);
 
         // sampling beta
-        regout_struct = gESS_draw_hierLinearModel(regdata_vector[reg].y, regdata_vector[reg].X, trans(oldbetas(reg, span::all)), trans(betabar(reg, span::all)), oldtau[reg], incroot_use, ucholinv_use, mu_ellipse, ucholinv);
+        regout_struct = gESS_draw_hierLinearModel(regdata_vector[reg].y, regdata_vector[reg].X, trans(oldbetas(reg, span::all)), trans(betabar(reg, span::all)), oldtau[reg], incroot_ellipse, ucholinv_ellipse, mu_ellipse, ucholinv);
 
         betas(reg, span::all) = trans(regout_struct.beta);
         // sampling tau

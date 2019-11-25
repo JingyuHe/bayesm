@@ -17,7 +17,7 @@ double log_likelihood_reg2(vec const &y, mat const &X, vec const &beta, double s
     return output;
 }
 
-unireg ESS_draw_hierLinearModel2(vec const &y, mat const &X, vec const &beta_ini, vec const &beta_hat, mat const &L, double tau)
+unireg ESS_draw_rhierLinearMixture(vec const &y, mat const &X, vec const &beta_ini, vec const &beta_hat, mat const &L, double tau)
 {
 
     /*
@@ -127,7 +127,7 @@ List rhierLinearMixture_slice_rcpp_loop(List const &regdata, mat const &Z,
         startMcmcTimer();
 
 
-    mat L;
+    mat incroot;
     double s;
 
     for (int rep = 0; rep < R; rep++)
@@ -177,15 +177,14 @@ List rhierLinearMixture_slice_rcpp_loop(List const &regdata, mat const &Z,
             // Abeta = rootpi * trans(rootpi);
             // Abetabar = Abeta * betabar;
 
+            incroot = trans(inv(rootpi));
 
-            L = trans(inv(rootpi));
-
-            // L * trans(L) = Sigma
-            // L = chol(L, "lower");
+            // incroot * trans(incroot) = Sigma
+            // incroot = chol(Sigma, "lower");
             // cout <<  trans(oldbetas(reg, span::all)) << endl;
             // cout << trans(betabar(reg, span::all)) << endl;
 
-            runiregout_struct = ESS_draw_hierLinearModel2(regdata_vector[reg].y, regdata_vector[reg].X, trans(oldbetas(reg, span::all)), betabar, L, tau[reg]);
+            runiregout_struct = ESS_draw_rhierLinearMixture(regdata_vector[reg].y, regdata_vector[reg].X, trans(oldbetas(reg, span::all)), betabar, incroot, tau[reg]);
 
             oldbetas(reg, span::all) = trans(runiregout_struct.beta);
 

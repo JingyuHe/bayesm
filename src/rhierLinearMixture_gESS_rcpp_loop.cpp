@@ -25,6 +25,8 @@ unireg gESS_draw_hierLinearMixture(vec const &y, mat const &X, vec const &beta_i
     Input : beta_ini, vector of initial value
             beta_hat, mean of beta (likelihood function)
             L, Cholesky factor (lower triangular LL' = Sigma) of covariance matrix of normal part
+
+            rootpi * trans(rootpi) = Sigma^{-1}
     */
     unireg out_struct;
     // subtract mean from the initial value, sample the deviation from mean
@@ -129,8 +131,7 @@ List rhierLinearMixture_gESS_rcpp_loop(List const &regdata, mat const &Z,
 
     mat L;
     double s;
-
-
+    
     mat incroot;
     mat incroot_inv;
     vec mu_ellipse;
@@ -181,21 +182,22 @@ List rhierLinearMixture_gESS_rcpp_loop(List const &regdata, mat const &Z,
             }
 
 
-            // Abeta = Vbeta^{-1} inverse
-            // Abeta = trans(rootpi) * rootpi;
+            // Abeta is precision matrix, the inverse of Vbeta
             // Abeta = rootpi * trans(rootpi);
             // Abetabar = Abeta * betabar;
 
-            temp = vectorise(rootpi * (vectorise(oldbetas(reg, span::all)) - betabar));
+            // suppose temp = rootpi' * X
+            // trans(temp) * temp becomes X' * rootpi * rootpi' * X = X' * Sigma^{-1} * X, error term for generalized ESS
+            temp = vectorise(trans(rootpi) * (vectorise(oldbetas(reg, span::all)) - betabar));
             ss1 = (ss + betabar.n_elem) / 2.0;
             ss2 = (0.5 * (ss + (trans(temp) * temp)))[0];
 
             lambda = 1.0 / randg<vec>(1, distr_param(ss1, 1.0 / ss2))[0];
 
-            incroot = trans(inv(rootpi)) * sqrt(lambda);
-            // incroot = inv(rootpi) * sqrt(lambda);
+            // incroot = solve(trimatu(trans(rootpi)), eye(nvar,nvar)) * sqrt(lambda);
 
-            // incroot_inv = rootpi / sqrt(lambda);
+            incroot = trans(inv(rootpi)) * sqrt(lambda);
+
             incroot_inv = rootpi / sqrt(lambda);
 
             runiregout_struct = gESS_draw_hierLinearMixture(regdata_vector[reg].y, regdata_vector[reg].X, trans(oldbetas(reg, span::all)), betabar, tau[reg], incroot, incroot_inv, betabar, rootpi);

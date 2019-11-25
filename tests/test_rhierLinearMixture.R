@@ -82,9 +82,19 @@ draw(1,1)
 
 
 
-coda::effectiveSize(out1$betadraw[3,1,])
-coda::effectiveSize(out2$betadraw[3,1,])
-coda::effectiveSize(out3$betadraw[3,1,])
+# K-S test, whether two empirical distribution same or not
+p_values = matrix(0, dim(out1$betadraw)[1], dim(out1$betadraw)[2])
+
+for(i in 1:(dim(out1$betadraw)[1])){
+  for(j in 1:(dim(out1$betadraw)[2])){
+    p_values[i,j] = ks.test(out1$betadraw[i,j, ], out2$betadraw[i,j, ])$p.value
+  }
+}
+
+
+mean(apply(out1$betadraw, c(1,2), effectiveSize))
+mean(apply(out2$betadraw, c(1,2), effectiveSize))
+mean(apply(out3$betadraw, c(1,2), effectiveSize))
 
 t1
 t2

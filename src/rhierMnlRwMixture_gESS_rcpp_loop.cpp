@@ -276,6 +276,8 @@ List rhierMnlRwMixture_gESS_rcpp_loop(List const &lgtdata, mat const &Z,
                 mu_ellipse = betabar;
 
                 // sampling s, generalized ESS
+                // temp = rootpi' * X
+                // trans(temp) * temp = X' * rootpi * rootpi' * X = X' * Sigma^{-1} * X
                 temp = vectorise(trans(rootpi) * (vectorise(oldbetas(lgt, span::all)) - mu_ellipse));
 
                 ss1 = (ss + betabar.n_elem) / 2.0;
