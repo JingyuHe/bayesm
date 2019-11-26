@@ -208,7 +208,7 @@ List rhierMnlRwMixture_gESS_rcpp_loop(List const &lgtdata, mat const &Z,
         {
             olddelta.reshape(nvar, nz);
 
-            if (rep < 2000)
+            if (rep < 2000 && fix_p_burnin)
             {
                 mgout = rmixGibbs_fix_p(oldbetas - Z * trans(olddelta), mubar, Amu, nu, V, a, oldprob, ind);
             }
@@ -219,7 +219,7 @@ List rhierMnlRwMixture_gESS_rcpp_loop(List const &lgtdata, mat const &Z,
         }
         else
         {
-            if (rep < 2000)
+            if (rep < 2000 && fix_p_burnin)
             {
                 mgout = rmixGibbs_fix_p(oldbetas, mubar, Amu, nu, V, a, oldprob, ind);
             }
@@ -242,7 +242,7 @@ List rhierMnlRwMixture_gESS_rcpp_loop(List const &lgtdata, mat const &Z,
         {
             List oldcomplgt = oldcomp[ind[lgt] - 1];
 
-            // rooti * trans(rooti) = sigma^{-1}  !!! cholesky root of sigma Inverse
+            // rooti * trans(rooti) = sigma^{-1}  !!! lower cholesky root of sigma Inverse
             rootpi = as<mat>(oldcomplgt[1]);
 
             //note: beta_i = Delta*z_i + u_i  Delta is nvar x nz
@@ -266,6 +266,7 @@ List rhierMnlRwMixture_gESS_rcpp_loop(List const &lgtdata, mat const &Z,
                 ucholinv = solve(trimatu(chol(lgtdata_vector[lgt].hess + rootpi * trans(rootpi))), eye(nvar, nvar)); //trimatu interprets the matrix as upper triangular and makes solve more efficient
 
                 // t(incroot) * incroot = inv(H + Vb^{-1})
+                // here incroot is upper triangular, different from gESS
                 incroot = chol(ucholinv * trans(ucholinv));
 
                 metropout_struct = mnlMetropOnce_con_MH_gESS(lgtdata_vector[lgt].y, lgtdata_vector[lgt].X, vectorise(oldbetas(lgt, span::all)), oldll[lgt], s, incroot, betabar, rootpi, SignRes);

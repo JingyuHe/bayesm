@@ -3,8 +3,8 @@ library(coda)
 
 R = 2000
 # set.seed(66)
-nreg = 300
-nobs = 500
+nreg = 50
+nobs = 100
 nvar = 3
 nz = 2
 Z = matrix(runif(nreg*nz), ncol=nz)

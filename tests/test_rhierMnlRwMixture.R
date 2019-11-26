@@ -7,11 +7,11 @@ N_simu = 10 # number of simulations
 set.seed(109)
 
 presition_beta = 1
-ncomp = 10
+ncomp = 3
 
 
 p = 2
-R = 10000
+R = 2000
 
 burnin = 3000
 
@@ -41,7 +41,6 @@ simmnlwX = function(n, X, beta) {
   }
   return(list(y = y, X = X, beta = beta, prob = Prob))
 }
-
 
 
 

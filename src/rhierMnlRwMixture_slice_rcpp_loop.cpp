@@ -251,7 +251,7 @@ List rhierMnlRwMixture_slice_rcpp_loop(List const &lgtdata, mat const &Z,
         {
             olddelta.reshape(nvar, nz);
 
-            if (rep < 2000)
+            if (rep < 2000 && fix_p_burnin)
             {
                 mgout = rmixGibbs_fix_p(oldbetas - Z * trans(olddelta), mubar, Amu, nu, V, a, oldprob, ind);
             }
@@ -262,7 +262,7 @@ List rhierMnlRwMixture_slice_rcpp_loop(List const &lgtdata, mat const &Z,
         }
         else
         {
-            if (rep < 2000)
+            if (rep < 2000 && fix_p_burnin)
             {
                 mgout = rmixGibbs_fix_p(oldbetas, mubar, Amu, nu, V, a, oldprob, ind);
             }
@@ -316,9 +316,10 @@ List rhierMnlRwMixture_slice_rcpp_loop(List const &lgtdata, mat const &Z,
             }
             else
             {
-                L = inv(rootpi * trans(rootpi));
+                // L = inv(rootpi * trans(rootpi));
                 // L * trans(L) = Sigma
-                L = chol(L, "lower");
+                // L = chol(L, "lower");
+                L = trans(solve(rootpi, eye(nvar, nvar)));
                 metropout_struct = ESS_draw_hierLogitMixture(lgtdata_vector[lgt].y, lgtdata_vector[lgt].X, vectorise(oldbetas(lgt, span::all)), betabar, L, oldll[lgt], SignRes);
             }
 
