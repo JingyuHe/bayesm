@@ -319,7 +319,8 @@ List rhierMnlRwMixture_slice_rcpp_loop(List const &lgtdata, mat const &Z,
                 // L = inv(rootpi * trans(rootpi));
                 // L * trans(L) = Sigma
                 // L = chol(L, "lower");
-                L = trans(solve(rootpi, eye(nvar, nvar)));
+                // L = trans(solve(rootpi, eye(nvar, nvar)));
+                L = trans(inv(rootpi));
                 metropout_struct = ESS_draw_hierLogitMixture(lgtdata_vector[lgt].y, lgtdata_vector[lgt].X, vectorise(oldbetas(lgt, span::all)), betabar, L, oldll[lgt], SignRes);
             }
 
