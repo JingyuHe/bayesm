@@ -139,7 +139,7 @@ mnlMetropOnceOut ESS_draw_hierLogitMixture(vec const &y, mat const &X, vec const
     // compute the prior threshold
     double u = as_scalar(randu<vec>(1));
 
-    double priorcomp = oldll; //llmnl_con(beta_ini, y, X, SignRes);
+    double priorcomp = llmnl_con(beta_ini, y, X, SignRes);
 
     // cout << oldll << endl;
     // cout << llmnl(beta_ini, y, X) << endl;
