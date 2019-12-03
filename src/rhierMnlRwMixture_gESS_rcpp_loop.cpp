@@ -69,7 +69,7 @@ mnlMetropOnceOut gESS_draw_hierLogitMixture(vec const &y, mat const &X, vec cons
   */
     mnlMetropOnceOut out_struct;
     // subtract mean from the initial value, sample the deviation from mean
-    vec beta = beta_ini - beta_hat;
+    vec beta = beta_ini - mu_ellipse;
 
     // draw the auxillary vector
     vec eps = arma::randn<vec>(incroot.n_cols);
@@ -97,7 +97,7 @@ mnlMetropOnceOut gESS_draw_hierLogitMixture(vec const &y, mat const &X, vec cons
 
     double compll;
 
-    compll = llmnl_con(betaprop + beta_hat, y, X, SignRes) + lndMvn(betaprop + beta_hat, beta_hat, rootpi) - lndMvst(betaprop + mu_ellipse, 2.0, mu_ellipse, incroot_inv, false);
+    compll = llmnl_con(betaprop + mu_ellipse, y, X, SignRes) + lndMvn(betaprop + mu_ellipse, beta_hat, rootpi) - lndMvst(betaprop + mu_ellipse, 2.0, mu_ellipse, incroot_inv, false);
 
     while (compll < ly)
     {
@@ -117,7 +117,7 @@ mnlMetropOnceOut gESS_draw_hierLogitMixture(vec const &y, mat const &X, vec cons
 
         betaprop = beta * cos(thetaprop) + nu * sin(thetaprop);
 
-        compll = llmnl_con(betaprop + beta_hat, y, X, SignRes) + lndMvn(betaprop + beta_hat, beta_hat, rootpi) - lndMvst(betaprop + mu_ellipse, 2.0, mu_ellipse, incroot_inv, false);
+        compll = llmnl_con(betaprop + mu_ellipse, y, X, SignRes) + lndMvn(betaprop + mu_ellipse, beta_hat, rootpi) - lndMvst(betaprop + mu_ellipse, 2.0, mu_ellipse, incroot_inv, false);
     }
 
     // accept the proposal
@@ -295,8 +295,11 @@ List rhierMnlRwMixture_gESS_rcpp_loop(List const &lgtdata, mat const &Z,
                 // L * trans(L) = Sigma
                 // L = chol(L, "lower");
 
-                L = trans(inv(rootpi));
-                incroot = L * sqrt(lambda);
+                // L = trans(inv(rootpi));
+                // L = trans(as<mat>(oldcomplgt[2]));
+                // cout << "L " << L << endl;
+                // cout << "next " << as<mat>(oldcomplgt[2]) << endl;
+                incroot = trans(as<mat>(oldcomplgt[2])) * sqrt(lambda);
                 incroot_inv = rootpi / sqrt(lambda);
 
                 // incroot = chol(cov_ellipse, "lower") * sqrt(lambda);

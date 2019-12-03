@@ -1,10 +1,11 @@
 library(bayesm)
 library(coda)
+library(clusterGeneration)
 
 R = 2000
 # set.seed(66)
-nreg = 50
-nobs = 100
+nreg = 40
+nobs = 5000
 nvar = 3
 nz = 2
 Z = matrix(runif(nreg*nz), ncol=nz)
@@ -15,10 +16,18 @@ iota = c(rep(1,nobs))
 ## create arguments for rmixture
 tcomps = NULL
 a = matrix(c(1,0,0,0.5773503,1.1547005,0,-0.4082483,0.4082483,1.2247449), ncol=3)
-tcomps[[1]] = list(mu=c(0,-1,-2),   rooti=a)
-tcomps[[2]] = list(mu=c(0,-1,-2)*2, rooti=a)
-tcomps[[3]] = list(mu=c(0,-1,-2)*4, rooti=a)
+a1 = a2 = a3 = a
+
+# generate random correlation matrix
+# a1 = t(chol(solve(rcorrmatrix(3))))
+# a2 = t(chol(solve(rcorrmatrix(3))))
+# a3 = t(chol(solve(rcorrmatrix(3))))
+tcomps[[1]] = list(mu=c(0,-1,-2),   rooti=a1)
+tcomps[[2]] = list(mu=c(0,-1,-2)*2, rooti=a2)
+tcomps[[3]] = list(mu=c(0,-1,-2)*4, rooti=a3)
 tpvec = c(0.4, 0.2, 0.4)
+
+
 ## simulated data with Z
 regdata = NULL
 betas = matrix(double(nreg*nvar), ncol=nvar)
@@ -34,7 +43,7 @@ regdata[[reg]] = list(y=y, X=X, beta=betas[reg,], tau=tau)
 }
 ## run rhierLinearMixture
 Data1 = list(regdata=regdata, Z=Z)
-Prior1 = list(ncomp=2)
+Prior1 = list(ncomp=3)
 Mcmc1 = list(R=R, keep=1)
 
 t1 = proc.time()
@@ -42,7 +51,9 @@ out1 = rhierLinearMixture_gESS(Data=Data1, Prior=Prior1, Mcmc=Mcmc1)
 t1 = proc.time() - t1
 
 t2 = proc.time()
+# out1 = rhierLinearMixture(Data=Data1, Prior=Prior1, Mcmc=Mcmc1)
 out2 = rhierLinearMixture(Data=Data1, Prior=Prior1, Mcmc=Mcmc1)
+# out3 = rhierLinearMixture(Data=Data1, Prior=Prior1, Mcmc=Mcmc1)
 t2 = proc.time() - t2
 
 t3 = proc.time()
@@ -99,3 +110,69 @@ mean(apply(out3$betadraw, c(1,2), effectiveSize))
 t1
 t2
 t3
+
+
+
+
+pdf(file="linear_acf_gESS.pdf", height = 6, width = 6)
+
+a1 = acf(out1$betadraw[j,2,],plot=FALSE)
+plot(a1$acf~a1$lag,type='h',col="#00000005",lwd=10, xlab = "Lag", ylab = "Autocorrelation")
+
+for(j in 1:50) {
+a1 = acf(out1$betadraw[j,2,],plot=FALSE)
+lines(a1$acf~a1$lag,type='h',col="#00000005",lwd=10)
+}
+
+dev.off()
+
+
+
+pdf(file="linear_acf_Gibbs.pdf", height = 6, width = 6)
+
+a1 = acf(out2$betadraw[j,2,],plot=FALSE)
+plot(a1$acf~a1$lag,type='h',col="#00000005",lwd=10, xlab = "Lag", ylab = "Autocorrelation")
+
+for(j in 1:50) {
+a1 = acf(out2$betadraw[j,2,],plot=FALSE)
+lines(a1$acf~a1$lag,type='h',col="#00000005",lwd=10)
+}
+
+dev.off()
+
+
+
+pdf(file="linear_acf_ESS.pdf", height = 6, width = 6)
+
+a1 = acf(out3$betadraw[j,2,],plot=FALSE)
+plot(a1$acf~a1$lag,type='h',col="#00000005",lwd=10, xlab = "Lag", ylab = "Autocorrelation")
+
+for(j in 1:50) {
+a1 = acf(out3$betadraw[j,2,],plot=FALSE)
+lines(a1$acf~a1$lag,type='h',col="#00000005",lwd=10)
+}
+
+dev.off()
+
+
+
+
+
+
+# check posterior mean and sd
+par(mfrow = c(2,2))
+a = as.vector(apply(out1$betadraw, c(1,2), mean))
+b = as.vector(apply(out2$betadraw, c(1,2), mean))
+d = as.vector(apply(out3$betadraw, c(1,2), mean))
+plot(b,a, ylab="GESS", xlab="Gibbs", main = "Posterior mean")
+abline(0,1,col="red",lwd = 2)
+plot(b,d, ylab="ESS", xlab="Gibbs", main = "Posterior mean")
+abline(0,1,col="red",lwd = 2)
+
+a = as.vector(apply(out1$betadraw, c(1,2), sd))
+b = as.vector(apply(out2$betadraw, c(1,2), sd))
+d = as.vector(apply(out3$betadraw, c(1,2), sd))
+plot(b,a, ylab="GESS", xlab="Gibbs", main = "Posterior std")
+abline(0,1,col="red",lwd = 2)
+plot(b,d, ylab="ESS", xlab="Gibbs", main = "Posterior std")
+abline(0,1,col="red",lwd = 2)

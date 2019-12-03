@@ -6,23 +6,24 @@ filename = "1.rda"
 
 N_simu = 10 # number of simulations
 
-set.seed(107)
+# set.seed(100)
 
 presition_beta = 1
 ncomp = 10
 
 
-p = 2
+p = 3
+# posterior samples
 R = 10000
-
+# burnin
 burnin = 3000
 
 
 
 ncoef = 3
-nlgt = 20
+nlgt = 100
 nobs = 100
-nz = 2
+nz = 3
 
 
 ##  simulate from MNL model conditional on X matrix
@@ -407,11 +408,11 @@ for (j in 1:length(output)) {
   for (i in 1:7) {
     MSE_beta = cbind(MSE_beta, output[[j]][[i]][["MSE_beta"]])
     MSE_delta = cbind(MSE_delta, output[[j]][[i]][["MSE_delta"]])
-    EFF_delta = cbind(EFF_delta, mean(as.vector(output[[j]][[i]][["EFF_delta"]]) / as.vector(output[[j]][[1]][["EFF_delta"]])))
-    EFF_beta = cbind(EFF_beta, mean(output[[j]][[i]][["EFF_beta"]] / output[[j]][[1]][["EFF_beta"]]))
-    EFF_betabar = cbind(EFF_betabar, mean(output[[j]][[i]][["EFF_betabar"]] / output[[j]][[1]][["EFF_betabar"]]))
-    EFF_prob = cbind(EFF_prob, mean(output[[j]][[i]][["EFF_prob"]] / output[[j]][[1]][["EFF_prob"]]))
-    EFF_cov = cbind(EFF_cov, mean(output[[j]][[i]][["EFF_cov"]] / output[[j]][[1]][["EFF_cov"]]))
+    EFF_delta = cbind(EFF_delta, mean(as.vector(output[[j]][[i]][["EFF_delta"]])))
+    EFF_beta = cbind(EFF_beta, mean(output[[j]][[i]][["EFF_beta"]]))
+    EFF_betabar = cbind(EFF_betabar, mean(output[[j]][[i]][["EFF_betabar"]]))
+    EFF_prob = cbind(EFF_prob, mean(output[[j]][[i]][["EFF_prob"]]))
+    EFF_cov = cbind(EFF_cov, mean(output[[j]][[i]][["EFF_cov"]]))
     time = cbind(time, output[[j]][[i]][["time"]][3])
   }
 

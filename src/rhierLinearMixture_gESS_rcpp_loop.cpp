@@ -136,6 +136,7 @@ List rhierLinearMixture_gESS_rcpp_loop(List const &regdata, mat const &Z,
     mat incroot_inv;
     vec mu_ellipse;
     vec temp;
+    vec mu_comp;
     double ss1, ss2, lambda;
     double ss = 2;
 
@@ -169,7 +170,6 @@ List rhierLinearMixture_gESS_rcpp_loop(List const &regdata, mat const &Z,
         {
             List oldcompreg = oldcomp[ind[reg] - 1];
             rootpi = as<mat>(oldcompreg[1]);
-
             //note: beta_i = Delta*z_i + u_i  Delta is nvar x nz
             if (drawdelta)
             {
@@ -192,11 +192,15 @@ List rhierLinearMixture_gESS_rcpp_loop(List const &regdata, mat const &Z,
             ss1 = (ss + betabar.n_elem) / 2.0;
             ss2 = (0.5 * (ss + (trans(temp) * temp)))[0];
 
-            lambda = 1.0 / randg<vec>(1, distr_param(ss1, 1.0 / ss2))[0];
-
+            // lambda = 1.0 / randg<vec>(1, distr_param(ss1, 1.0 / ss2))[0];
+lambda = 1.0;
             // incroot = solve(trimatu(trans(rootpi)), eye(nvar,nvar)) * sqrt(lambda);
 
-            incroot = trans(inv(rootpi)) * sqrt(lambda);
+            // incroot = trans(inv(rootpi)) * sqrt(lambda);
+            // cout << "incroot" << rootpi << endl;
+            // cout << "IW_chol" << as<mat>(oldcompreg[2]) << endl;
+            incroot = trans(as<mat>(oldcompreg[2])) * sqrt(lambda);
+
 
             incroot_inv = rootpi / sqrt(lambda);
 

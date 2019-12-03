@@ -1,25 +1,24 @@
+rm(list = ls())
 library(bayesm)
 library(doParallel)
 library(coda)
 
 N_simu = 10 # number of simulations
 
-set.seed(109)
-
 presition_beta = 1
 ncomp = 3
 
 
 p = 2
-R = 2000
+R = 5000
 
-burnin = 3000
+burnin = 2000
 
 
 
 ncoef = 3
-nlgt = 20
-nobs = 100
+nlgt = 300
+nobs = 30
 nz = 2
 
 
@@ -56,9 +55,17 @@ mu = sample(c(-2, -1, 0, 1, 2), p, TRUE)
 # pvec = c(1)
 pvec = rdirichlet(rep(ncomp, ncomp))
 comps = list()
+
+a = matrix(c(1,0,0.5773503,1.1547005), ncol=2)
+
 for (i in 1:ncomp) {
-  comps[[i]] = list(mu = mu * i, rooti = diag(rep(presition_beta, p)))
+  # comps[[i]] = list(mu = mu * i, rooti = diag(rep(presition_beta, p)))
+  comps[[i]] = list(mu = mu * i, rooti = a)
 }
+
+
+
+
 ## simulate data
 simlgtdata = NULL
 betatrue = matrix(0, nlgt, p)
@@ -74,88 +81,55 @@ for (i in 1:nlgt) {
 
 ## set parms for priors and Z
 Prior1 = list(ncomp = ncomp)
-keep = 1
+keep = 5
 Mcmc1 = list(R = R, keep = keep)
 Data1 = list(p = p, lgtdata = simlgtdata, Z = Z)
 
-# Gibbs sampler
+
+# generalized elliptical slice sampler, without MH burnin, no fix p burnin
 time1 = proc.time()
-out1 = bayesm::rhierMnlRwMixture(Data = Data1, Prior = Prior1, Mcmc = Mcmc1)
+# out1 = bayesm::rhierMnlRwMixture_gESS(Data = Data1, Prior = Prior1, Mcmc = Mcmc1, FALSE, FALSE)
 time1 = proc.time() - time1
-summary1 = summary_posterior(out1, betatrue, Delta)
-summary1$time = time1
+
+# Gibbs sampler
+time2 = proc.time()
+out1 = bayesm::rhierMnlRwMixture(Data = Data1, Prior = Prior1, Mcmc = Mcmc1)
+out2 = bayesm::rhierMnlRwMixture(Data = Data1, Prior = Prior1, Mcmc = Mcmc1)
+# out3 = bayesm::rhierMnlRwMixture(Data = Data1, Prior = Prior1, Mcmc = Mcmc1)
+time2 = proc.time() - time2
+
 
 # elliptical slice sampler, without MH burnin, no fix p burnin
-time2 = proc.time()
-out2 = bayesm::rhierMnlRwMixture_slice(Data = Data1, Prior = Prior1, Mcmc = Mcmc1, FALSE, FALSE)
-time2 = proc.time() - time2
-summary2 = summary_posterior(out2, betatrue, Delta)
-summary2$time = time2
-
-# elliptical slice sampler, with MH burnin, no fix p burnin
 time3 = proc.time()
-out3 = bayesm::rhierMnlRwMixture_slice(Data = Data1, Prior = Prior1, Mcmc = Mcmc1, TRUE, FALSE)
-# out3 = bayesm::rhierMnlRwMixture_slice(Data = Data1, Prior = Prior1, Mcmc = Mcmc1, FALSE, FALSE)
+out3 = bayesm::rhierMnlRwMixture_slice(Data = Data1, Prior = Prior1, Mcmc = Mcmc1, FALSE, FALSE)
 time3 = proc.time() - time3
-summary3 = summary_posterior(out3, betatrue, Delta)
-summary3$time = time3
-
-# elliptical slice sampler, without MH burnin, with fix p burnin
-time4 = proc.time()
-out4 = bayesm::rhierMnlRwMixture_slice(Data = Data1, Prior = Prior1, Mcmc = Mcmc1, FALSE, FALSE)
-time4 = proc.time() - time4
-summary4 = summary_posterior(out4, betatrue, Delta)
-summary4$time = time4
-
-# elliptical slice sampler, with MH burnin, with fix p burnin
-time5 = proc.time()
-out5 = bayesm::rhierMnlRwMixture_slice(Data = Data1, Prior = Prior1, Mcmc = Mcmc1, TRUE, FALSE)
-time5 = proc.time() - time5
-summary5 = summary_posterior(out5, betatrue, Delta)
-summary5$time = time5
-
-# generalized elliptical slice sampler, without MH burnin, no fix p burnin
-time6 = proc.time()
-out6 = bayesm::rhierMnlRwMixture_gESS(Data = Data1, Prior = Prior1, Mcmc = Mcmc1, FALSE, FALSE)
-time6 = proc.time() - time6
-summary6 = summary_posterior(out6, betatrue, Delta)
-summary6$time = time6
-
-# generalized elliptical slice sampler, without MH burnin, no fix p burnin
-time7 = proc.time()
-out7 = bayesm::rhierMnlRwMixture_gESS(Data = Data1, Prior = Prior1, Mcmc = Mcmc1, TRUE, TRUE)
-time7 = proc.time() - time7
-summary7 = summary_posterior(out7, betatrue, Delta)
-summary7$time = time7
-
-par(mfrow = c(3, 3))
-for (i in 1:7) {
-  objname = paste("beta", i, sep = "")
-  resname = paste("out", i, sep = "")
-  temp = apply(get(resname)$betadraw[,, (0.2 * R):R], c(1, 2), mean)
-  assign(objname, temp)
-}
-
-plot(as.vector(betatrue), as.vector(beta1), main = "MH")
-abline(0, 1)
-plot(as.vector(betatrue), as.vector(beta2), main = "ESS - MH - p")
-abline(0, 1)
-plot(as.vector(betatrue), as.vector(beta3), main = "ESS + MH - p")
-abline(0, 1)
-plot(as.vector(betatrue), as.vector(beta4), main = "ESS - MH + p")
-abline(0, 1)
-plot(as.vector(betatrue), as.vector(beta5), main = "ESS + MH + p")
-abline(0, 1)
-plot(as.vector(betatrue), as.vector(beta6), main = "gESS - MH - p")
-abline(0, 1)
-plot(as.vector(betatrue), as.vector(beta7), main = "gESS + MH + p")
-abline(0, 1)
-plot(as.vector(beta3), as.vector(beta5), main = "ESS + MH - p vs ESS + MH + p")
-abline(0, 1)
-plot(as.vector(beta2), as.vector(beta4), main = "ESS - MH - p vs ESS - MH + p")
-abline(0, 1)
 
 
 
+# check posterior mean and sd
+# pdf("logit_beta.pdf", height = 8, width = 8)
+par(mfrow = c(2,3))
+a = as.vector(apply(out1$betadraw, c(1,2), mean))
+b = as.vector(apply(out2$betadraw, c(1,2), mean))
+d = as.vector(apply(out3$betadraw, c(1,2), mean))
+plot(b,a, ylab="GESS", xlab="Gibbs", main = "Posterior mean")
+abline(0,1,col="red",lwd = 2)
+plot(b,d, ylab="ESS", xlab="Gibbs", main = "Posterior mean")
+abline(0,1,col="red",lwd = 2)
+plot(a,d, ylab="ESS", xlab="GESS", main = "Posterior mean")
+abline(0,1,col="red",lwd = 2)
 
+a = as.vector(apply(out1$betadraw, c(1,2), sd))
+b = as.vector(apply(out2$betadraw, c(1,2), sd))
+d = as.vector(apply(out3$betadraw, c(1,2), sd))
+plot(b,a, ylab="GESS", xlab="Gibbs", main = "Posterior std")
+abline(0,1,col="red",lwd = 2)
+plot(b,d, ylab="ESS", xlab="Gibbs", main = "Posterior std")
+abline(0,1,col="red",lwd = 2)
+plot(a,d, ylab="ESS", xlab="GESS", main = "Posterior std")
+abline(0,1,col="red",lwd = 2)
 
+# dev.off()a
+mean(apply(out1$betadraw, c(1,2), effectiveSize))
+mean(apply(out2$betadraw, c(1,2), effectiveSize))
+mean(apply(out3$betadraw, c(1,2), effectiveSize))

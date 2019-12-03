@@ -141,9 +141,6 @@ mnlMetropOnceOut ESS_draw_hierLogitMixture(vec const &y, mat const &X, vec const
 
     double priorcomp = llmnl_con(beta_ini, y, X, SignRes);
 
-    // cout << oldll << endl;
-    // cout << llmnl(beta_ini, y, X) << endl;
-
     double ly = priorcomp + log(u); // here is log likelihood
 
     // elliptical slice sampling
@@ -320,7 +317,10 @@ List rhierMnlRwMixture_slice_rcpp_loop(List const &lgtdata, mat const &Z,
                 // L * trans(L) = Sigma
                 // L = chol(L, "lower");
                 // L = trans(solve(rootpi, eye(nvar, nvar)));
-                L = trans(inv(rootpi));
+                // L = trans(inv(rootpi));
+                L = trans(as<mat>(oldcomplgt[2]));
+
+
                 metropout_struct = ESS_draw_hierLogitMixture(lgtdata_vector[lgt].y, lgtdata_vector[lgt].X, vectorise(oldbetas(lgt, span::all)), betabar, L, oldll[lgt], SignRes);
             }
 

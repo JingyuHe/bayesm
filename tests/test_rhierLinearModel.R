@@ -107,3 +107,24 @@ t1
 t2
 t3
 
+
+
+
+
+# check posterior mean and sd
+par(mfrow = c(2,2))
+a = as.vector(apply(out1$betadraw, c(1,2), mean))
+b = as.vector(apply(out2$betadraw, c(1,2), mean))
+d = as.vector(apply(out3$betadraw, c(1,2), mean))
+plot(b,a, ylab="GESS", xlab="Gibbs", main = "Posterior mean")
+abline(0,1,col="red",lwd = 2)
+plot(d,a, ylab="ESS", xlab="Gibbs", main = "Posterior mean")
+abline(0,1,col="red",lwd = 2)
+
+a = as.vector(apply(out1$betadraw, c(1,2), sd))
+b = as.vector(apply(out2$betadraw, c(1,2), sd))
+d = as.vector(apply(out3$betadraw, c(1,2), sd))
+plot(b,a, ylab="GESS", xlab="Gibbs", main = "Posterior std")
+abline(0,1,col="red",lwd = 2)
+plot(d,a, ylab="ESS", xlab="Gibbs", main = "Posterior std")
+abline(0,1,col="red",lwd = 2)

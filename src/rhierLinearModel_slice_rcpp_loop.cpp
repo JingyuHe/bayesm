@@ -185,11 +185,11 @@ List rhierLinearModel_slice_rcpp_loop(List const &regdata, mat const &Z, mat con
 
     L = chol(Vbeta, "lower");
     // compute the inverse of Vbeta
-    ucholinv = solve(trimatu(trans(L)), eye(nvar, nvar)); //trimatu interprets the matrix as upper triangular and makes solve more efficient
-    Abeta = ucholinv * trans(ucholinv);
+    // ucholinv = solve(trimatu(trans(L)), eye(nvar, nvar)); //trimatu interprets the matrix as upper triangular and makes solve more efficient
+    // Abeta = ucholinv * trans(ucholinv);
 
     betabar = Z * Delta;
-    Abetabar = Abeta * trans(betabar);
+    // Abetabar = Abeta * trans(betabar);
 
     // loop over all regressions
     // can be replaced by elliptical slice sampler

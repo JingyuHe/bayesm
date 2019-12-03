@@ -177,7 +177,11 @@ List rhierLinearMixture_slice_rcpp_loop(List const &regdata, mat const &Z,
             // Abeta = rootpi * trans(rootpi);
             // Abetabar = Abeta * betabar;
 
-            incroot = trans(inv(rootpi));
+            // incroot = trans(inv(rootpi));
+
+            incroot = trans(as<mat>(oldcompreg[2]));
+            // cout << "incroot" << incroot << endl;
+            // cout << "IW_chol" << as<mat>(oldcompreg[2]) << endl;
 
             // incroot * trans(incroot) = Sigma
             // incroot = chol(Sigma, "lower");
