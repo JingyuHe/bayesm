@@ -2,10 +2,10 @@ library(bayesm)
 library(coda)
 library(clusterGeneration)
 
-R = 2000
+R = 5000
 # set.seed(66)
-nreg = 40
-nobs = 5000
+nreg = 100
+nobs = 50
 nvar = 3
 nz = 2
 Z = matrix(runif(nreg*nz), ncol=nz)

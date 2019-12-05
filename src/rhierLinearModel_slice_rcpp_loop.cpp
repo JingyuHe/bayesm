@@ -205,7 +205,7 @@ List rhierLinearModel_slice_rcpp_loop(List const &regdata, mat const &Z, mat con
 
       // sampling tau
       s = sum(square(regdata_vector[reg].y-regdata_vector[reg].X*regout_struct.beta));
-      tau[reg] = (s + nu_e*ssq[reg])/rchisq(1,nu_e+regdata_vector[reg].y.n_elem)[0]; //rchisq returns a vectorized object, so using [0] allows for the conversion to double
+      tau[reg] = (s + nu_e*ssq[reg])/rchisq(1,nu_e+regdata_vector[reg].y.size())[0]; //rchisq returns a vectorized object, so using [0] allows for the conversion to double
     }
 
     //draw Vbeta, Delta | {beta_i}

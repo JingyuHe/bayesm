@@ -191,6 +191,8 @@ List rhierMnlRwMixture_gESS_rcpp_loop(List const &lgtdata, mat const &Z,
     double lambda;
     double ss = 2; 
 
+    mat temp1;
+    mat temp2;
     mat scale = zeros<mat>(R, nlgt);
 
     if (nprint > 0)
@@ -299,8 +301,13 @@ List rhierMnlRwMixture_gESS_rcpp_loop(List const &lgtdata, mat const &Z,
                 // L = trans(as<mat>(oldcomplgt[2]));
                 // cout << "L " << L << endl;
                 // cout << "next " << as<mat>(oldcomplgt[2]) << endl;
-                incroot = trans(as<mat>(oldcomplgt[2])) * sqrt(lambda);
-                incroot_inv = rootpi / sqrt(lambda);
+
+                if(rep == 2000){
+                    temp1 = trans(as<mat>(oldcomplgt[2]));
+                    temp2 = rootpi;
+                }
+                incroot = temp1 * sqrt(lambda);
+                incroot_inv = temp2 / sqrt(lambda);
 
                 // incroot = chol(cov_ellipse, "lower") * sqrt(lambda);
 
