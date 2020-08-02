@@ -85,6 +85,8 @@ double lndMvst(vec const& x, double nu, vec const& mu, mat const& rooti, bool NO
 
 double lndMvn(vec const& x, vec const& mu, mat const& rooti);
 
+double lndLogMvn(vec const& x, vec const& mu, mat const& rooti);
+
 double lndIWishart(double nu, mat const& V, mat const& IW);
 
 vec rmvst(double nu, vec const& mu, mat const& root);
@@ -94,7 +96,10 @@ vec breg(vec const& y, mat const& X, vec const& betabar, mat const& A);
 vec cgetC(double e, int k);
 
 List rmixGibbs( mat const& y,  mat const& Bbar, mat const& A, double nu, mat const& V,  vec const& a, vec const& p,  vec const& z);
-  //rmixGibbs contains the following support functions, which are called ONLY THROUGH rmixGibbs: drawCompsFromLabels, drawLabelsFromComps, and drawPFromLabels
+
+List rmixGibbs_fix_p( mat const& y,  mat const& Bbar, mat const& A, double nu, mat const& V,  vec const& a, vec const& p,  vec const& z);
+
+//rmixGibbs contains the following support functions, which are called ONLY THROUGH rmixGibbs: drawCompsFromLabels, drawLabelsFromComps, and drawPFromLabels
 
 //SUPPORT FUNCTIONS (contained in utilityFunctions.cpp and trunNorm.cpp)-----------------------------------------------------------
 //Used in rmvpGibbs and rmnpGibbs
@@ -151,5 +156,7 @@ lambda lambdaD(lambda const& lambda_struct, std::vector<murooti> const& thetaSta
 void startMcmcTimer();
 void infoMcmcTimer(int rep, int R);
 void endMcmcTimer();
+
+double llmnl_con(vec const& betastar, vec const& y, mat const& X, vec const& SignRes = NumericVector::create(0));
 
 #endif

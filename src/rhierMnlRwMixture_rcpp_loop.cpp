@@ -2,7 +2,11 @@
 
 //FUNCTION SPECIFIC TO MAIN FUNCTION------------------------------------------------------
 //[[Rcpp::export]]
+<<<<<<< HEAD
 double llmnl_con(vec const& betastar, vec const& y, mat const& X, vec const& SignRes = NumericVector::create(0)){
+=======
+double llmnl_con(vec const& betastar, vec const& y, mat const& X, vec const& SignRes){
+>>>>>>> master
   
   // Wayne Taylor 7/8/2016
   
@@ -80,6 +84,12 @@ mnlMetropOnceOut mnlMetropOnce_con(vec const& y, mat const& X, vec const& oldbet
   vec betadraw, alphaminv;
   
   int stay = 0;
+<<<<<<< HEAD
+=======
+
+  // be careful, incroot takes transpose here
+  // incroot * t(incroot) = H, therefore we need to transpose it 
+>>>>>>> master
   vec betac = oldbeta + s*trans(incroot)*as<vec>(rnorm(X.n_cols));
   double cll = llmnl_con(betac,y,X,SignRes);
   double clpost = cll+lndMvn(betac,betabar,rootpi);
@@ -183,7 +193,11 @@ List rhierMnlRwMixture_rcpp_loop(List const& lgtdata, mat const& Z,
         if (rep == 0) oldll[lgt] = llmnl_con(vectorise(oldbetas(lgt,span::all)),lgtdata_vector[lgt].y,lgtdata_vector[lgt].X,SignRes);
         
         //compute inc.root
+
+        // ucholinv * trans(ucholinv) = inv(H + Vb^{-1})
         ucholinv = solve(trimatu(chol(lgtdata_vector[lgt].hess+rootpi*trans(rootpi))), eye(nvar,nvar)); //trimatu interprets the matrix as upper triangular and makes solve more efficient
+
+        // t(incroot) * incroot = inv(H + Vb^{-1})
         incroot = chol(ucholinv*trans(ucholinv));
                 
         metropout_struct = mnlMetropOnce_con(lgtdata_vector[lgt].y,lgtdata_vector[lgt].X,vectorise(oldbetas(lgt,span::all)),

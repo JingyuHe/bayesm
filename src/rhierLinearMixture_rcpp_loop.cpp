@@ -75,7 +75,13 @@ List rhierLinearMixture_rcpp_loop(List const& regdata, mat const& Z,
           betabar = as<vec>(oldcompreg[0]);
         }
       
-        Abeta = trans(rootpi)*rootpi;
+        // bug ??? !!!
+        // Abeta = trans(rootpi)*rootpi;
+// cout << " -------- " << endl;
+// cout << trans(rootpi)*rootpi << endl;
+// cout << " ++++++++ " << endl;
+// cout << rootpi * trans(rootpi) << endl;
+        Abeta = rootpi * trans(rootpi);
         Abetabar = Abeta*betabar;
 
         runiregout_struct = runiregG(regdata_vector[reg].y, regdata_vector[reg].X,

@@ -13,7 +13,7 @@ List drawCompsFromLabels(mat const& y,  mat const& Bbar,
 // Function to draw the components based on the z labels
   
   vec b, r, mu;
-  mat yk, Xk, Ck, sigma, rooti, S, IW, CI;
+  mat yk, Xk, Ck, sigma, rooti, S, IW, CI, IW_chol;
   List temp, rw, comps(ncomp);
   
   int n = z.n_rows;
@@ -33,16 +33,21 @@ List drawCompsFromLabels(mat const& y,  mat const& Bbar,
       yk = y.rows(find(z==(k+1))); //Note k starts at 0 and z starts at 1
       Xk = ones(nobincomp[k], 1);
 
+
+      // just regress yk to 1 
       temp = rmultireg(yk, Xk, Bbar, A, nu, V);
       
       sigma = as<mat>(temp["Sigma"]); //conversion from Rcpp to Armadillo requires explict declaration of variable type using as<>
+IW_chol = chol(sigma);
+      // rooti * trans(rooti) = sigma^{-1}  !!! cholesky root of sigma Inverse
       rooti = solve(trimatu(chol(sigma)),eye(sigma.n_rows,sigma.n_cols)); //trimatu interprets the matrix as upper triangular and makes solve more efficient
-      
+      // cout << "sigma " << IW_chol << endl;
       mu = as<vec>(temp["B"]);
 
       comps(k) = List::create(
         Named("mu") = NumericVector(mu.begin(),mu.end()), //converts to a NumericVector, otherwise it will be interpretted as a matrix
-        Named("rooti") = rooti
+        Named("rooti") = rooti,
+        Named("IW_chol") = IW_chol
       );
       
     } else {
@@ -54,16 +59,19 @@ List drawCompsFromLabels(mat const& y,  mat const& Bbar,
       
       IW = as<mat>(rw["IW"]);
       CI = as<mat>(rw["CI"]);
-      
+IW_chol = chol(IW);
       rooti = solve(trimatu(chol(IW)),eye(IW.n_rows,IW.n_cols));        
       b = vectorise(Bbar);
       r = rnorm(b.n_rows,0,1);
-      
+      // cout << "IW " << IW_chol << endl;
       mu = b + (CI * r) / sqrt(A(0,0));
   	
 		  comps(k) = List::create(
 			  Named("mu") = NumericVector(mu.begin(),mu.end()), //converts to a NumericVector, otherwise it will be interpretted as a matrix
-			  Named("rooti") = rooti);
+
+			  Named("rooti") = rooti,
+        Named("IW_chol") = IW_chol
+        );
     } 
   }
 
@@ -170,6 +178,31 @@ List rmixGibbs( mat const& y,  mat const& Bbar,
   vec z2 = drawLabelsFromComps(y, p, comps);
   
   vec p2 = drawPFromLabels(a, z2);
+
+  return List::create(
+    Named("p") = p2,
+    Named("z") = z2,
+    Named("comps") = comps);
+}
+
+
+
+//[[Rcpp::export]]
+List rmixGibbs_fix_p( mat const& y,  mat const& Bbar, 
+                mat const& A, double nu, 
+                mat const& V,  vec const& a, 
+                vec const& p,  vec const& z) {
+
+// Wayne Taylor 9/10/2014
+  
+  List comps = drawCompsFromLabels(y, Bbar, A, nu, V, a.size(), z);
+  
+  vec z2 = drawLabelsFromComps(y, p, comps);
+  
+  // do not update p for burn-in period
+  // vec p2 = drawPFromLabels(a, z2);
+
+  vec p2 = p;
 
   return List::create(
     Named("p") = p2,
