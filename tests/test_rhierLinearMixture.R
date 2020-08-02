@@ -1,13 +1,14 @@
 library(bayesm)
 library(coda)
 library(clusterGeneration)
+library(FNN)
 
-R = 5000
+R = 10000
 burnin = 3000
 
 # set.seed(66)
 nreg = 100
-nobs = 50
+nobs = 10
 nvar = 3
 nz = 2
 Z = matrix(runif(nreg*nz), ncol=nz)
@@ -98,14 +99,19 @@ draw(1,1)
 
 
 
-# K-S test, whether two empirical distribution same or not
-p_values = matrix(0, dim(out1$betadraw[,,burnin:R])[1], dim(out1$betadraw[,,burnin:R])[2])
+# K-L divergence, whether two empirical distribution same or not
+calc_divergence = function(out1, out2){
+  divergence = matrix(0, dim(out1$betadraw[,,burnin:R])[1], dim(out1$betadraw[,,burnin:R])[2])
 
-for(i in 1:(dim(out1$betadraw[,,burnin:R])[1])){
-  for(j in 1:(dim(out1$betadraw[,,burnin:R])[2])){
-    p_values[i,j] = ks.test(out1$betadraw[,,burnin:R][i,j, ], out2$betadraw[,,burnin:R][i,j, ])$p.value
+  for(i in 1:(dim(out1$betadraw[,,burnin:R])[1])){
+    for(j in 1:(dim(out1$betadraw[,,burnin:R])[2])){
+      divergence[i,j] = mean(KL.divergence(out1$betadraw[,,burnin:R][i,j, ], out2$betadraw[,,burnin:R][i,j, ]))
+    }
   }
+
+  return(mean(divergence))
 }
+
 
 
 mean(apply(out1$betadraw[,,burnin:R], c(1,2), effectiveSize))
