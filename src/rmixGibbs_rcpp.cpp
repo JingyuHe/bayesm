@@ -33,6 +33,7 @@ List drawCompsFromLabels(mat const& y,  mat const& Bbar,
       yk = y.rows(find(z==(k+1))); //Note k starts at 0 and z starts at 1
       Xk = ones(nobincomp[k], 1);
 
+
       // just regress yk to 1 
       temp = rmultireg(yk, Xk, Bbar, A, nu, V);
       
@@ -67,6 +68,7 @@ IW_chol = chol(IW);
   	
 		  comps(k) = List::create(
 			  Named("mu") = NumericVector(mu.begin(),mu.end()), //converts to a NumericVector, otherwise it will be interpretted as a matrix
+
 			  Named("rooti") = rooti,
         Named("IW_chol") = IW_chol
         );
