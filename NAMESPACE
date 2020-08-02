@@ -10,7 +10,6 @@ export(breg,createX,eMixMargDen,mixDen,llmnl,llmnp,llnhlogit,
 lndIChisq,lndIWishart,lndMvn,lndMvst,mnlHess,momMix,nmat,numEff,rdirichlet, rmixture,rmultireg,
 rwishart,rmvst,rtrun,rbprobitGibbs,runireg,
 runiregGibbs,simnhlogit,rmnpGibbs,rmixGibbs,rnmixGibbs,
-<<<<<<< HEAD
 rmvpGibbs,rhierLinearModel,rhierMnlRwMixture,rivGibbs,
 rmnlIndepMetrop,rscaleUsage,ghkvec,condMom,logMargDenNR,
 rhierBinLogit,rnegbinRw,rhierNegbinRw,rbiNormGibbs,clusterMix,rsurGibbs,

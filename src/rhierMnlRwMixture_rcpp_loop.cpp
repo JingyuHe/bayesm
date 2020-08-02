@@ -2,11 +2,7 @@
 
 //FUNCTION SPECIFIC TO MAIN FUNCTION------------------------------------------------------
 //[[Rcpp::export]]
-<<<<<<< HEAD
-double llmnl_con(vec const& betastar, vec const& y, mat const& X, vec const& SignRes = NumericVector::create(0)){
-=======
 double llmnl_con(vec const& betastar, vec const& y, mat const& X, vec const& SignRes){
->>>>>>> master
   
   // Wayne Taylor 7/8/2016
   
@@ -84,12 +80,9 @@ mnlMetropOnceOut mnlMetropOnce_con(vec const& y, mat const& X, vec const& oldbet
   vec betadraw, alphaminv;
   
   int stay = 0;
-<<<<<<< HEAD
-=======
 
   // be careful, incroot takes transpose here
   // incroot * t(incroot) = H, therefore we need to transpose it 
->>>>>>> master
   vec betac = oldbeta + s*trans(incroot)*as<vec>(rnorm(X.n_cols));
   double cll = llmnl_con(betac,y,X,SignRes);
   double clpost = cll+lndMvn(betac,betabar,rootpi);
