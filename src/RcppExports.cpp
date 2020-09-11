@@ -482,6 +482,38 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// rhierMnlRwMixture_slice_rcpp_loop
+List rhierMnlRwMixture_horseshoe_slice_rcpp_loop(List const& lgtdata, mat const& Z, vec const& deltabar, mat const& Ad, mat const& mubar, mat const& Amu, double nu, mat const& V, double s, int R, int keep, int nprint, bool drawdelta, mat olddelta, vec const& a, vec oldprob, mat oldbetas, vec ind, vec const& SignRes, double p_MH, bool MH_burnin, bool fix_p_burnin);
+RcppExport SEXP _bayesm_rhierMnlRwMixture_horseshoe_slice_rcpp_loop(SEXP lgtdataSEXP, SEXP ZSEXP, SEXP deltabarSEXP, SEXP AdSEXP, SEXP mubarSEXP, SEXP AmuSEXP, SEXP nuSEXP, SEXP VSEXP, SEXP sSEXP, SEXP RSEXP, SEXP keepSEXP, SEXP nprintSEXP, SEXP drawdeltaSEXP, SEXP olddeltaSEXP, SEXP aSEXP, SEXP oldprobSEXP, SEXP oldbetasSEXP, SEXP indSEXP, SEXP SignResSEXP, SEXP p_MHSEXP, SEXP MH_burninSEXP, SEXP fix_p_burninSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List const& >::type lgtdata(lgtdataSEXP);
+    Rcpp::traits::input_parameter< mat const& >::type Z(ZSEXP);
+    Rcpp::traits::input_parameter< vec const& >::type deltabar(deltabarSEXP);
+    Rcpp::traits::input_parameter< mat const& >::type Ad(AdSEXP);
+    Rcpp::traits::input_parameter< mat const& >::type mubar(mubarSEXP);
+    Rcpp::traits::input_parameter< mat const& >::type Amu(AmuSEXP);
+    Rcpp::traits::input_parameter< double >::type nu(nuSEXP);
+    Rcpp::traits::input_parameter< mat const& >::type V(VSEXP);
+    Rcpp::traits::input_parameter< double >::type s(sSEXP);
+    Rcpp::traits::input_parameter< int >::type R(RSEXP);
+    Rcpp::traits::input_parameter< int >::type keep(keepSEXP);
+    Rcpp::traits::input_parameter< int >::type nprint(nprintSEXP);
+    Rcpp::traits::input_parameter< bool >::type drawdelta(drawdeltaSEXP);
+    Rcpp::traits::input_parameter< mat >::type olddelta(olddeltaSEXP);
+    Rcpp::traits::input_parameter< vec const& >::type a(aSEXP);
+    Rcpp::traits::input_parameter< vec >::type oldprob(oldprobSEXP);
+    Rcpp::traits::input_parameter< mat >::type oldbetas(oldbetasSEXP);
+    Rcpp::traits::input_parameter< vec >::type ind(indSEXP);
+    Rcpp::traits::input_parameter< vec const& >::type SignRes(SignResSEXP);
+    Rcpp::traits::input_parameter< double >::type p_MH(p_MHSEXP);
+    Rcpp::traits::input_parameter< bool >::type MH_burnin(MH_burninSEXP);
+    Rcpp::traits::input_parameter< bool >::type fix_p_burnin(fix_p_burninSEXP);
+    rcpp_result_gen = Rcpp::wrap(rhierMnlRwMixture_horseshoe_slice_rcpp_loop(lgtdata, Z, deltabar, Ad, mubar, Amu, nu, V, s, R, keep, nprint, drawdelta, olddelta, a, oldprob, oldbetas, ind, SignRes, p_MH, MH_burnin, fix_p_burnin));
+    return rcpp_result_gen;
+END_RCPP
+}
 // rhierMnlRwMixture_gESS_rcpp_loop
 List rhierMnlRwMixture_gESS_rcpp_loop(List const& lgtdata, mat const& Z, vec const& deltabar, mat const& Ad, mat const& mubar, mat const& Amu, double nu, mat const& V, double s, int R, int keep, int nprint, bool drawdelta, mat olddelta, vec const& a, vec oldprob, mat oldbetas, vec ind, vec const& SignRes, double p_MH, bool MH_burnin, bool fix_p_burnin);
 RcppExport SEXP _bayesm_rhierMnlRwMixture_gESS_rcpp_loop(SEXP lgtdataSEXP, SEXP ZSEXP, SEXP deltabarSEXP, SEXP AdSEXP, SEXP mubarSEXP, SEXP AmuSEXP, SEXP nuSEXP, SEXP VSEXP, SEXP sSEXP, SEXP RSEXP, SEXP keepSEXP, SEXP nprintSEXP, SEXP drawdeltaSEXP, SEXP olddeltaSEXP, SEXP aSEXP, SEXP oldprobSEXP, SEXP oldbetasSEXP, SEXP indSEXP, SEXP SignResSEXP, SEXP p_MHSEXP, SEXP MH_burninSEXP, SEXP fix_p_burninSEXP) {
@@ -511,6 +543,38 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< bool >::type MH_burnin(MH_burninSEXP);
     Rcpp::traits::input_parameter< bool >::type fix_p_burnin(fix_p_burninSEXP);
     rcpp_result_gen = Rcpp::wrap(rhierMnlRwMixture_gESS_rcpp_loop(lgtdata, Z, deltabar, Ad, mubar, Amu, nu, V, s, R, keep, nprint, drawdelta, olddelta, a, oldprob, oldbetas, ind, SignRes, p_MH, MH_burnin, fix_p_burnin));
+    return rcpp_result_gen;
+END_RCPP
+}
+// rhierMnlRwMixture_horseshoe_gESS_rcpp_loop
+List rhierMnlRwMixture_horseshoe_gESS_rcpp_loop(List const& lgtdata, mat const& Z, vec const& deltabar, mat const& Ad, mat const& mubar, mat const& Amu, double nu, mat const& V, double s, int R, int keep, int nprint, bool drawdelta, mat olddelta, vec const& a, vec oldprob, mat oldbetas, vec ind, vec const& SignRes, double p_MH, bool MH_burnin, bool fix_p_burnin);
+RcppExport SEXP _bayesm_rhierMnlRwMixture_horseshoe_gESS_rcpp_loop(SEXP lgtdataSEXP, SEXP ZSEXP, SEXP deltabarSEXP, SEXP AdSEXP, SEXP mubarSEXP, SEXP AmuSEXP, SEXP nuSEXP, SEXP VSEXP, SEXP sSEXP, SEXP RSEXP, SEXP keepSEXP, SEXP nprintSEXP, SEXP drawdeltaSEXP, SEXP olddeltaSEXP, SEXP aSEXP, SEXP oldprobSEXP, SEXP oldbetasSEXP, SEXP indSEXP, SEXP SignResSEXP, SEXP p_MHSEXP, SEXP MH_burninSEXP, SEXP fix_p_burninSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List const& >::type lgtdata(lgtdataSEXP);
+    Rcpp::traits::input_parameter< mat const& >::type Z(ZSEXP);
+    Rcpp::traits::input_parameter< vec const& >::type deltabar(deltabarSEXP);
+    Rcpp::traits::input_parameter< mat const& >::type Ad(AdSEXP);
+    Rcpp::traits::input_parameter< mat const& >::type mubar(mubarSEXP);
+    Rcpp::traits::input_parameter< mat const& >::type Amu(AmuSEXP);
+    Rcpp::traits::input_parameter< double >::type nu(nuSEXP);
+    Rcpp::traits::input_parameter< mat const& >::type V(VSEXP);
+    Rcpp::traits::input_parameter< double >::type s(sSEXP);
+    Rcpp::traits::input_parameter< int >::type R(RSEXP);
+    Rcpp::traits::input_parameter< int >::type keep(keepSEXP);
+    Rcpp::traits::input_parameter< int >::type nprint(nprintSEXP);
+    Rcpp::traits::input_parameter< bool >::type drawdelta(drawdeltaSEXP);
+    Rcpp::traits::input_parameter< mat >::type olddelta(olddeltaSEXP);
+    Rcpp::traits::input_parameter< vec const& >::type a(aSEXP);
+    Rcpp::traits::input_parameter< vec >::type oldprob(oldprobSEXP);
+    Rcpp::traits::input_parameter< mat >::type oldbetas(oldbetasSEXP);
+    Rcpp::traits::input_parameter< vec >::type ind(indSEXP);
+    Rcpp::traits::input_parameter< vec const& >::type SignRes(SignResSEXP);
+    Rcpp::traits::input_parameter< double >::type p_MH(p_MHSEXP);
+    Rcpp::traits::input_parameter< bool >::type MH_burnin(MH_burninSEXP);
+    Rcpp::traits::input_parameter< bool >::type fix_p_burnin(fix_p_burninSEXP);
+    rcpp_result_gen = Rcpp::wrap(rhierMnlRwMixture_horseshoe_gESS_rcpp_loop(lgtdata, Z, deltabar, Ad, mubar, Amu, nu, V, s, R, keep, nprint, drawdelta, olddelta, a, oldprob, oldbetas, ind, SignRes, p_MH, MH_burnin, fix_p_burnin));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -1047,7 +1111,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_bayesm_llmnl_con", (DL_FUNC) &_bayesm_llmnl_con, 4},
     {"_bayesm_rhierMnlRwMixture_rcpp_loop", (DL_FUNC) &_bayesm_rhierMnlRwMixture_rcpp_loop, 19},
     {"_bayesm_rhierMnlRwMixture_slice_rcpp_loop", (DL_FUNC) &_bayesm_rhierMnlRwMixture_slice_rcpp_loop, 22},
+    {"_bayesm_rhierMnlRwMixture_horseshoe_slice_rcpp_loop", (DL_FUNC) &_bayesm_rhierMnlRwMixture_horseshoe_slice_rcpp_loop, 22},
     {"_bayesm_rhierMnlRwMixture_gESS_rcpp_loop", (DL_FUNC) &_bayesm_rhierMnlRwMixture_gESS_rcpp_loop, 22},
+    {"_bayesm_rhierMnlRwMixture_horseshoe_gESS_rcpp_loop", (DL_FUNC) &_bayesm_rhierMnlRwMixture_horseshoe_gESS_rcpp_loop, 22},
     {"_bayesm_rhierMnlRwMixtureLogNormal_rcpp_loop", (DL_FUNC) &_bayesm_rhierMnlRwMixtureLogNormal_rcpp_loop, 19},
     {"_bayesm_rhierMnlRwMixtureLogNormal_slice_rcpp_loop", (DL_FUNC) &_bayesm_rhierMnlRwMixtureLogNormal_slice_rcpp_loop, 20},
     {"_bayesm_rhierNegbinRw_rcpp_loop", (DL_FUNC) &_bayesm_rhierNegbinRw_rcpp_loop, 19},

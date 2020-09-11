@@ -61,7 +61,7 @@
 //return(list(betadraw=betadraw,stay=stay,oldll=oldll))
 //}
 
-mnlMetropOnceOut mnlMetropOnce_con_MH_horseshoe(vec const &y, mat const &X, vec const &oldbeta,
+mnlMetropOnceOut mnlMetropOnce_con_MH(vec const &y, mat const &X, vec const &oldbeta,
                                       double oldll, double s, mat const &incroot,
                                       vec const &betabar, mat const &rootpi, vec const &SignRes = NumericVector::create(2))
 {
@@ -119,7 +119,7 @@ mnlMetropOnceOut mnlMetropOnce_con_MH_horseshoe(vec const &y, mat const &X, vec 
     return (out_struct);
 }
 
-mnlMetropOnceOut ESS_draw_hierLogitMixture_horseshoe(vec const &y, mat const &X, vec const &beta_ini, vec const &beta_hat, mat const &L, double oldll, vec const &SignRes = NumericVector::create(2))
+mnlMetropOnceOut ESS_draw_hierLogitMixture(vec const &y, mat const &X, vec const &beta_ini, vec const &beta_hat, mat const &L, double oldll, vec const &SignRes = NumericVector::create(2))
 {
 
     /*
@@ -189,7 +189,7 @@ mnlMetropOnceOut ESS_draw_hierLogitMixture_horseshoe(vec const &y, mat const &X,
 //MAIN FUNCTION-------------------------------------------------------------------------------------
 
 //[[Rcpp::export]]
-List rhierMnlRwMixture_slice_rcpp_loop(List const &lgtdata, mat const &Z,
+List rhierMnlRwMixture_horseshoe_slice_rcpp_loop(List const &lgtdata, mat const &Z,
                                        vec const &deltabar, mat const &Ad, mat const &mubar, mat const &Amu,
                                        double nu, mat const &V, double s,
                                        int R, int keep, int nprint, bool drawdelta,
@@ -308,7 +308,7 @@ List rhierMnlRwMixture_slice_rcpp_loop(List const &lgtdata, mat const &Z,
                 // t(incroot) * incroot = inv(H + Vb^{-1})
                 incroot = chol(ucholinv * trans(ucholinv));
 
-                metropout_struct = mnlMetropOnce_con_MH_horseshoe(lgtdata_vector[lgt].y, lgtdata_vector[lgt].X, vectorise(oldbetas(lgt, span::all)),
+                metropout_struct = mnlMetropOnce_con_MH(lgtdata_vector[lgt].y, lgtdata_vector[lgt].X, vectorise(oldbetas(lgt, span::all)),
                                                         oldll[lgt], s, incroot, betabar, rootpi, SignRes);
             }
             else
@@ -321,7 +321,7 @@ List rhierMnlRwMixture_slice_rcpp_loop(List const &lgtdata, mat const &Z,
                 L = trans(as<mat>(oldcomplgt[2]));
 
 
-                metropout_struct = ESS_draw_hierLogitMixture_horseshoe(lgtdata_vector[lgt].y, lgtdata_vector[lgt].X, vectorise(oldbetas(lgt, span::all)), betabar, L, oldll[lgt], SignRes);
+                metropout_struct = ESS_draw_hierLogitMixture(lgtdata_vector[lgt].y, lgtdata_vector[lgt].X, vectorise(oldbetas(lgt, span::all)), betabar, L, oldll[lgt], SignRes);
             }
 
             oldbetas(lgt, span::all) = trans(metropout_struct.betadraw);

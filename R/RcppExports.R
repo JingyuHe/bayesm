@@ -93,9 +93,18 @@ rhierMnlRwMixture_slice_rcpp_loop <- function(lgtdata, Z, deltabar, Ad, mubar, A
     .Call('_bayesm_rhierMnlRwMixture_slice_rcpp_loop', PACKAGE = 'bayesm', lgtdata, Z, deltabar, Ad, mubar, Amu, nu, V, s, R, keep, nprint, drawdelta, olddelta, a, oldprob, oldbetas, ind, SignRes, p_MH, MH_burnin, fix_p_burnin)
 }
 
+rhierMnlRwMixture_horseshoe_slice_rcpp_loop <- function(lgtdata, Z, deltabar, Ad, mubar, Amu, nu, V, s, R, keep, nprint, drawdelta, olddelta, a, oldprob, oldbetas, ind, SignRes, p_MH, MH_burnin, fix_p_burnin) {
+    .Call('_bayesm_rhierMnlRwMixture_horseshoe_slice_rcpp_loop', PACKAGE = 'bayesm', lgtdata, Z, deltabar, Ad, mubar, Amu, nu, V, s, R, keep, nprint, drawdelta, olddelta, a, oldprob, oldbetas, ind, SignRes, p_MH, MH_burnin, fix_p_burnin)
+}
+
 rhierMnlRwMixture_gESS_rcpp_loop <- function(lgtdata, Z, deltabar, Ad, mubar, Amu, nu, V, s, R, keep, nprint, drawdelta, olddelta, a, oldprob, oldbetas, ind, SignRes, p_MH, MH_burnin, fix_p_burnin) {
     .Call('_bayesm_rhierMnlRwMixture_gESS_rcpp_loop', PACKAGE = 'bayesm', lgtdata, Z, deltabar, Ad, mubar, Amu, nu, V, s, R, keep, nprint, drawdelta, olddelta, a, oldprob, oldbetas, ind, SignRes, p_MH, MH_burnin, fix_p_burnin)
 }
+
+rhierMnlRwMixture_horseshoe_gESS_rcpp_loop <- function(lgtdata, Z, deltabar, Ad, mubar, Amu, nu, V, s, R, keep, nprint, drawdelta, olddelta, a, oldprob, oldbetas, ind, SignRes, p_MH, MH_burnin, fix_p_burnin) {
+    .Call('_bayesm_rhierMnlRwMixture_horseshoe_gESS_rcpp_loop', PACKAGE = 'bayesm', lgtdata, Z, deltabar, Ad, mubar, Amu, nu, V, s, R, keep, nprint, drawdelta, olddelta, a, oldprob, oldbetas, ind, SignRes, p_MH, MH_burnin, fix_p_burnin)
+}
+
 
 rhierMnlRwMixtureLogNormal_rcpp_loop <- function(lgtdata, Z, deltabar, Ad, mubar, Amu, nu, V, s, R, keep, nprint, drawdelta, olddelta, a, oldprob, oldbetas, ind, SignRes) {
     .Call('_bayesm_rhierMnlRwMixtureLogNormal_rcpp_loop', PACKAGE = 'bayesm', lgtdata, Z, deltabar, Ad, mubar, Amu, nu, V, s, R, keep, nprint, drawdelta, olddelta, a, oldprob, oldbetas, ind, SignRes)

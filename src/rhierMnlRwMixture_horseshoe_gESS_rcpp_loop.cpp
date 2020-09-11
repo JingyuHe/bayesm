@@ -1,69 +1,8 @@
 #include "bayesm.h"
 
-// double llmnl_con_MH(vec const &betastar, vec const &y, mat const &X, vec const &SignRes = NumericVector::create(0))
-// {
-
-//     // Wayne Taylor 7/8/2016
-
-//     // Evaluates log-likelihood for the multinomial logit model WITH SIGN CONSTRAINTS
-//     // NOTE: this is exported only because it is used in the shell .R function, it will not be available to users
-
-//     //Reparameterize betastar to beta to allow for sign restrictions
-//     vec beta = betastar;
-
-//     //The default SignRes vector is a single element vector containing a zero
-//     //any() returns true if any elements of SignRes are non-zero
-//     if (any(SignRes))
-//     {
-//         uvec signInd = find(SignRes != 0);
-//         beta.elem(signInd) = SignRes.elem(signInd) % exp(beta.elem(signInd)); //% performs element-wise multiplication
-//     }
-
-//     int n = y.size();
-//     int j = X.n_rows / n;
-//     mat Xbeta = X * beta;
-
-//     vec xby = zeros<vec>(n);
-//     vec denom = zeros<vec>(n);
-
-//     for (int i = 0; i < n; i++)
-//     {
-//         for (int p = 0; p < j; p++)
-//             denom[i] = denom[i] + exp(Xbeta[i * j + p]);
-//         xby[i] = Xbeta[i * j + y[i] - 1];
-//     }
-
-//     return (sum(xby - log(denom)));
-// }
-
-//mnlRwMetropOnce=
-//function(y,X,oldbeta,oldll,s,inc.root,betabar,rootpi){
-//#
-//# function to execute rw metropolis for the MNL
-//# y is n vector with element = 1,...,j indicating which alt chosen
-//# X is nj x k matrix of xvalues for each of j alt on each of n occasions
-//# RW increments are N(0,s^2*t(inc.root)%*%inc.root)
-//# prior on beta is N(betabar,Sigma)  Sigma^-1=rootpi*t(rootpi)
-//#  inc.root, rootpi are upper triangular
-//#  this means that we are using the UL decomp of Sigma^-1 for prior
-//# oldbeta is the current
-//     stay=0
-//     betac=oldbeta + s*t(inc.root)%*%(matrix(rnorm(ncol(X)),ncol=1))
-//     cll=llmnl(betac,y,X)
-//     clpost=cll+lndMvn(betac,betabar,rootpi)
-//     ldiff=clpost-oldll-lndMvn(oldbeta,betabar,rootpi)
-//     alpha=min(1,exp(ldiff))
-//     if(alpha < 1) {unif=runif(1)} else {unif=0}
-//     if (unif <= alpha)
-//             {betadraw=betac; oldll=cll}
-//           else
-//             {betadraw=oldbeta; stay=1}
-//return(list(betadraw=betadraw,stay=stay,oldll=oldll))
-//}
-
-mnlMetropOnceOut mnlMetropOnce_con_MH_horseshoe(vec const &y, mat const &X, vec const &oldbeta,
-                                      double oldll, double s, mat const &incroot,
-                                      vec const &betabar, mat const &rootpi, vec const &SignRes = NumericVector::create(2))
+mnlMetropOnceOut mnlMetropOnce_con_MH_horseshoe_gESS(vec const &y, mat const &X, vec const &oldbeta,
+                                           double oldll, double s, mat const &incroot,
+                                           vec const &betabar, mat const &rootpi, vec const &SignRes = NumericVector::create(2))
 {
     // Wayne Taylor 10/01/2014
 
@@ -84,7 +23,7 @@ mnlMetropOnceOut mnlMetropOnce_con_MH_horseshoe(vec const &y, mat const &X, vec 
     int stay = 0;
 
     // Note trans(incroot) here
-    // The actual covariance is incroot * trans(incroot) = inv(H + Vb^{-1})
+    // The actual covariance is trans(incroot) * incroot = inv(H + Vb^{-1})
     vec betac = oldbeta + s * trans(incroot) * as<vec>(rnorm(X.n_cols));
 
     double cll = llmnl_con(betac, y, X, SignRes);
@@ -119,7 +58,7 @@ mnlMetropOnceOut mnlMetropOnce_con_MH_horseshoe(vec const &y, mat const &X, vec 
     return (out_struct);
 }
 
-mnlMetropOnceOut ESS_draw_hierLogitMixture_horseshoe(vec const &y, mat const &X, vec const &beta_ini, vec const &beta_hat, mat const &L, double oldll, vec const &SignRes = NumericVector::create(2))
+mnlMetropOnceOut horseshoe_gESS_draw_hierLogitMixture(vec const &y, mat const &X, vec const &beta_ini, vec const &beta_hat, mat const &rootpi, double oldll, mat const &incroot, mat const &incroot_inv, vec const &mu_ellipse, vec const &SignRes = NumericVector::create(2))
 {
 
     /*
@@ -130,18 +69,25 @@ mnlMetropOnceOut ESS_draw_hierLogitMixture_horseshoe(vec const &y, mat const &X,
   */
     mnlMetropOnceOut out_struct;
     // subtract mean from the initial value, sample the deviation from mean
-    vec beta = beta_ini - beta_hat;
+    vec beta = beta_ini - mu_ellipse;
 
     // draw the auxillary vector
-    vec eps = arma::randn<vec>(L.n_cols);
-    vec nu = L * eps;
+    vec eps = arma::randn<vec>(incroot.n_cols);
+    vec nu = incroot * eps;
 
     // compute the prior threshold
     double u = as_scalar(randu<vec>(1));
 
-    double priorcomp = llmnl_con(beta_ini, y, X, SignRes);
+    double priorcomp = oldll; //llmnl_con(beta_ini, y, X, SignRes);
 
-    double ly = priorcomp + log(u); // here is log likelihood
+    // cout << oldll << endl;
+    // cout << llmnl(beta_ini, y, X) << endl;
+
+    // double ly = priorcomp + log(u); // here is log likelihood
+
+    double ly = llmnl_con(beta_ini, y, X, SignRes) + lndMvn(beta_ini, beta_hat, rootpi) - lndMvst(beta_ini, 2.0, mu_ellipse, incroot_inv, false);
+
+    ly = ly + log(u);
 
     // elliptical slice sampling
     double thetaprop = as_scalar(randu<vec>(1)) * 2.0 * M_PI;
@@ -151,7 +97,7 @@ mnlMetropOnceOut ESS_draw_hierLogitMixture_horseshoe(vec const &y, mat const &X,
 
     double compll;
 
-    compll = llmnl_con(betaprop + beta_hat, y, X, SignRes);
+    compll = llmnl_con(betaprop + mu_ellipse, y, X, SignRes) + lndMvn(betaprop + mu_ellipse, beta_hat, rootpi) - lndMvst(betaprop + mu_ellipse, 2.0, mu_ellipse, incroot_inv, false);
 
     while (compll < ly)
     {
@@ -171,7 +117,7 @@ mnlMetropOnceOut ESS_draw_hierLogitMixture_horseshoe(vec const &y, mat const &X,
 
         betaprop = beta * cos(thetaprop) + nu * sin(thetaprop);
 
-        compll = llmnl_con(betaprop + beta_hat, y, X, SignRes);
+        compll = llmnl_con(betaprop + mu_ellipse, y, X, SignRes) + lndMvn(betaprop + mu_ellipse, beta_hat, rootpi) - lndMvst(betaprop + mu_ellipse, 2.0, mu_ellipse, incroot_inv, false);
     }
 
     // accept the proposal
@@ -189,11 +135,11 @@ mnlMetropOnceOut ESS_draw_hierLogitMixture_horseshoe(vec const &y, mat const &X,
 //MAIN FUNCTION-------------------------------------------------------------------------------------
 
 //[[Rcpp::export]]
-List rhierMnlRwMixture_slice_rcpp_loop(List const &lgtdata, mat const &Z,
-                                       vec const &deltabar, mat const &Ad, mat const &mubar, mat const &Amu,
-                                       double nu, mat const &V, double s,
-                                       int R, int keep, int nprint, bool drawdelta,
-                                       mat olddelta, vec const &a, vec oldprob, mat oldbetas, vec ind, vec const &SignRes, double p_MH, bool MH_burnin, bool fix_p_burnin)
+List rhierMnlRwMixture_horseshoe_gESS_rcpp_loop(List const &lgtdata, mat const &Z,
+                                      vec const &deltabar, mat const &Ad, mat const &mubar, mat const &Amu,
+                                      double nu, mat const &V, double s,
+                                      int R, int keep, int nprint, bool drawdelta,
+                                      mat olddelta, vec const &a, vec oldprob, mat oldbetas, vec ind, vec const &SignRes, double p_MH, bool MH_burnin, bool fix_p_burnin)
 {
     cout << "--------------------" << endl;
     cout << "mixture of MH and slice sampler" << endl;
@@ -232,6 +178,22 @@ List rhierMnlRwMixture_slice_rcpp_loop(List const &lgtdata, mat const &Z,
     if (drawdelta)
         Deltadraw.zeros(R / keep, nz * nvar); //enlarge Deltadraw only if the space is required
     List compdraw(R / keep);
+
+
+    mat Sigma;
+    vec mu_ellipse;
+    mat cov_ellipse;
+    mat incroot_inv;
+
+    double ss1;
+    double ss2;
+    vec temp;
+    double lambda;
+    double ss = 2; 
+
+    mat temp1;
+    mat temp2;
+    mat scale = zeros<mat>(R, nlgt);
 
     if (nprint > 0)
         startMcmcTimer();
@@ -282,7 +244,7 @@ List rhierMnlRwMixture_slice_rcpp_loop(List const &lgtdata, mat const &Z,
         {
             List oldcomplgt = oldcomp[ind[lgt] - 1];
 
-            // rooti * trans(rooti) = sigma^{-1}  !!! cholesky root of sigma Inverse
+            // rooti * trans(rooti) = sigma^{-1}  !!! lower cholesky root of sigma Inverse
             rootpi = as<mat>(oldcomplgt[1]);
 
             //note: beta_i = Delta*z_i + u_i  Delta is nvar x nz
@@ -306,22 +268,52 @@ List rhierMnlRwMixture_slice_rcpp_loop(List const &lgtdata, mat const &Z,
                 ucholinv = solve(trimatu(chol(lgtdata_vector[lgt].hess + rootpi * trans(rootpi))), eye(nvar, nvar)); //trimatu interprets the matrix as upper triangular and makes solve more efficient
 
                 // t(incroot) * incroot = inv(H + Vb^{-1})
+                // here incroot is upper triangular, different from gESS
                 incroot = chol(ucholinv * trans(ucholinv));
 
-                metropout_struct = mnlMetropOnce_con_MH_horseshoe(lgtdata_vector[lgt].y, lgtdata_vector[lgt].X, vectorise(oldbetas(lgt, span::all)),
-                                                        oldll[lgt], s, incroot, betabar, rootpi, SignRes);
+                metropout_struct = mnlMetropOnce_con_MH_horseshoe_gESS(lgtdata_vector[lgt].y, lgtdata_vector[lgt].X, vectorise(oldbetas(lgt, span::all)), oldll[lgt], s, incroot, betabar, rootpi, SignRes);
             }
             else
             {
+                // generalized elliptical slice Sampler
+                mu_ellipse = betabar;
+
+                // sampling s, generalized ESS
+                // temp = rootpi' * X
+                // trans(temp) * temp = X' * rootpi * rootpi' * X = X' * Sigma^{-1} * X
+                temp = vectorise(trans(rootpi) * (vectorise(oldbetas(lgt, span::all)) - mu_ellipse));
+
+                ss1 = (ss + betabar.n_elem) / 2.0;
+                ss2 = (0.5 * (ss + (trans(temp) * temp)))[0];
+
+                // draw scale parameter from inverse gamma
+                lambda = 1.0 / randg<vec>(1, distr_param(ss1, 1.0 / ss2))[0];
+
+                scale(rep, lgt) = lambda;
+
+                // cov_ellipse = inv(rootpi * trans(rootpi));
+
                 // L = inv(rootpi * trans(rootpi));
                 // L * trans(L) = Sigma
                 // L = chol(L, "lower");
-                // L = trans(solve(rootpi, eye(nvar, nvar)));
+
                 // L = trans(inv(rootpi));
-                L = trans(as<mat>(oldcomplgt[2]));
+                // L = trans(as<mat>(oldcomplgt[2]));
+                // cout << "L " << L << endl;
+                // cout << "next " << as<mat>(oldcomplgt[2]) << endl;
 
+                if(rep == 2000){
+                    temp1 = trans(as<mat>(oldcomplgt[2]));
+                    temp2 = rootpi;
+                }
+                incroot = temp1 * sqrt(lambda);
+                incroot_inv = temp2 / sqrt(lambda);
 
-                metropout_struct = ESS_draw_hierLogitMixture_horseshoe(lgtdata_vector[lgt].y, lgtdata_vector[lgt].X, vectorise(oldbetas(lgt, span::all)), betabar, L, oldll[lgt], SignRes);
+                // incroot = chol(cov_ellipse, "lower") * sqrt(lambda);
+
+                // incroot_inv = chol(inv(cov_ellipse), "lower") / sqrt(lambda);
+
+                metropout_struct = horseshoe_gESS_draw_hierLogitMixture(lgtdata_vector[lgt].y, lgtdata_vector[lgt].X, vectorise(oldbetas(lgt, span::all)), betabar, rootpi, oldll[lgt], incroot, incroot_inv, mu_ellipse, SignRes);
             }
 
             oldbetas(lgt, span::all) = trans(metropout_struct.betadraw);
@@ -384,7 +376,8 @@ List rhierMnlRwMixture_slice_rcpp_loop(List const &lgtdata, mat const &Z,
             Named("betadraw") = betadraw,
             Named("nmix") = nmix,
             Named("loglike") = loglike,
-            Named("SignRes") = SignRes));
+            Named("SignRes") = SignRes,
+            Named("scale_of_gESS") = scale));
     }
     else
     {
@@ -392,6 +385,7 @@ List rhierMnlRwMixture_slice_rcpp_loop(List const &lgtdata, mat const &Z,
             Named("betadraw") = betadraw,
             Named("nmix") = nmix,
             Named("loglike") = loglike,
-            Named("SignRes") = SignRes));
+            Named("SignRes") = SignRes,
+            Named("scale_of_gESS") = scale));
     }
 }
