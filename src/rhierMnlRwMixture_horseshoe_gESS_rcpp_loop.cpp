@@ -4,11 +4,16 @@ mnlMetropOnceOut gESS_draw_hierLogitMixture_horseshoe(vec const &y, mat const &X
 {
 
     /*
-    sample via elliptical slice sampler
-    Input : beta_ini, vector of initial value
-            beta_hat, mean of beta (likelihood function)
-            L, Cholesky factor (lower triangular LL' = Sigma) of covariance matrix of normal part
-  */
+    sample via generalized elliptical slice sampler
+    Input:  beta_ini, vector of the initial value
+            beta_hat, mean of the normal part
+            L, Cholesky factor (LL' = Sigma) of the normal part
+            Note that beta_hat, L are not defining the ellipse
+            mu_ellipse is the center of the ellipse
+            incroot * incroot' = covariance of the ellipse
+            incroot_inv = inv(incroot)
+    */
+   
     mnlMetropOnceOut out_struct;
     // subtract mean from the initial value, sample the deviation from mean
     vec beta = beta_ini - mu_ellipse;
@@ -22,14 +27,7 @@ mnlMetropOnceOut gESS_draw_hierLogitMixture_horseshoe(vec const &y, mat const &X
 
     double priorcomp = oldll; //llmnl_con(beta_ini, y, X, SignRes);
 
-    // cout << oldll << endl;
-    // cout << llmnl(beta_ini, y, X) << endl;
-
-    // double ly = priorcomp + log(u); // here is log likelihood
-
-    double ly = llmnl_con(beta_ini, y, X, SignRes) + lndMvn(beta_ini, beta_hat, rootpi) - lndMvst(beta_ini, 2.0, mu_ellipse, incroot_inv, false);
-
-    ly = ly + log(u);
+    double ly = llmnl_con(beta_ini, y, X, SignRes) + lndMvn(beta_ini, beta_hat, rootpi) - lndMvst(beta_ini, 2.0, mu_ellipse, incroot_inv, false) + log(u);
 
     // elliptical slice sampling
     double thetaprop = as_scalar(randu<vec>(1)) * 2.0 * M_PI;
@@ -43,8 +41,6 @@ mnlMetropOnceOut gESS_draw_hierLogitMixture_horseshoe(vec const &y, mat const &X
 
     while (compll < ly)
     {
-        // count ++ ;
-
         if (thetaprop < 0)
         {
             thetamin = thetaprop;
@@ -54,7 +50,6 @@ mnlMetropOnceOut gESS_draw_hierLogitMixture_horseshoe(vec const &y, mat const &X
             thetamax = thetaprop;
         }
 
-        // runif(thetamin, thetamax)
         thetaprop = as_scalar(randu<vec>(1)) * (thetamax - thetamin) + thetamin;
 
         betaprop = beta * cos(thetaprop) + nu * sin(thetaprop);
@@ -66,9 +61,6 @@ mnlMetropOnceOut gESS_draw_hierLogitMixture_horseshoe(vec const &y, mat const &X
     beta = betaprop;
 
     oldll = compll;
-    // cout << "saved value " << oldll << endl;
-    // cout << "-----" << endl;
-    // add the mean back
     out_struct.betadraw = beta + beta_hat;
     out_struct.oldll = oldll;
     return out_struct;

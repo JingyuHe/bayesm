@@ -69,7 +69,8 @@ mnlMetropOnceOut ESS_draw_hierLogitMixture(vec const &y, mat const &X, vec const
     Input : beta_ini, vector of initial value
             beta_hat, mean of beta (likelihood function)
             L, Cholesky factor (lower triangular LL' = Sigma) of covariance matrix of normal part
-  */
+    */
+    
     mnlMetropOnceOut out_struct;
     // subtract mean from the initial value, sample the deviation from mean
     vec beta = beta_ini - beta_hat;
@@ -97,8 +98,6 @@ mnlMetropOnceOut ESS_draw_hierLogitMixture(vec const &y, mat const &X, vec const
 
     while (compll < ly)
     {
-        // count ++ ;
-
         if (thetaprop < 0)
         {
             thetamin = thetaprop;
@@ -108,7 +107,6 @@ mnlMetropOnceOut ESS_draw_hierLogitMixture(vec const &y, mat const &X, vec const
             thetamax = thetaprop;
         }
 
-        // runif(thetamin, thetamax)
         thetaprop = as_scalar(randu<vec>(1)) * (thetamax - thetamin) + thetamin;
 
         betaprop = beta * cos(thetaprop) + nu * sin(thetaprop);
@@ -120,9 +118,6 @@ mnlMetropOnceOut ESS_draw_hierLogitMixture(vec const &y, mat const &X, vec const
     beta = betaprop;
 
     oldll = compll;
-    // cout << "saved value " << oldll << endl;
-    // cout << "-----" << endl;
-    // add the mean back
     out_struct.betadraw = beta + beta_hat;
     out_struct.oldll = oldll;
     return out_struct;
