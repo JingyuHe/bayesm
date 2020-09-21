@@ -61,7 +61,7 @@
 
 mnlMetropOnceOut mnlMetropOnce_conLogNormal(vec const &y, mat const &X, vec const &oldbeta,
                                             double oldll, double s, mat const &incroot,
-                                            vec const &betabar, mat const &rootpi, vec const &SignRes = NumericVector::create(2))
+                                            vec const &betabar, mat const &rootpi, vec const &SignRes)
 {
     // Wayne Taylor 10/01/2014
 

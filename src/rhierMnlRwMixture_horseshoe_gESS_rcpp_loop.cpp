@@ -1,64 +1,6 @@
 #include "bayesm.h"
 
-mnlMetropOnceOut mnlMetropOnce_con_MH_horseshoe_gESS(vec const &y, mat const &X, vec const &oldbeta,
-                                           double oldll, double s, mat const &incroot,
-                                           vec const &betabar, mat const &rootpi, vec const &SignRes = NumericVector::create(2))
-{
-    // Wayne Taylor 10/01/2014
-
-    // function to execute rw metropolis for the MNL
-    // y is n vector with element = 1,...,j indicating which alt chosen
-    // X is nj x k matrix of xvalues for each of j alt on each of n occasions
-    // RW increments are N(0,s^2*t(inc.root)%*%inc.root)
-    // prior on beta is N(betabar,Sigma)  Sigma^-1=rootpi*t(rootpi)
-    //  inc.root, rootpi are upper triangular
-    //  this means that we are using the UL decomp of Sigma^-1 for prior
-    // oldbeta is the current
-
-    mnlMetropOnceOut out_struct;
-
-    double unif;
-    vec betadraw, alphaminv;
-
-    int stay = 0;
-
-    // Note trans(incroot) here
-    // The actual covariance is trans(incroot) * incroot = inv(H + Vb^{-1})
-    vec betac = oldbeta + s * trans(incroot) * as<vec>(rnorm(X.n_cols));
-
-    double cll = llmnl_con(betac, y, X, SignRes);
-    double clpost = cll + lndMvn(betac, betabar, rootpi);
-    double ldiff = clpost - oldll - lndMvn(oldbeta, betabar, rootpi);
-    alphaminv << 1 << exp(ldiff);
-    double alpha = min(alphaminv);
-
-    if (alpha < 1)
-    {
-        unif = as_scalar(vec(runif(1)));
-    }
-    else
-    {
-        unif = 0;
-    }
-    if (unif <= alpha)
-    {
-        betadraw = betac;
-        oldll = cll;
-    }
-    else
-    {
-        betadraw = oldbeta;
-        stay = 1;
-    }
-
-    out_struct.betadraw = betadraw;
-    out_struct.stay = stay;
-    out_struct.oldll = oldll;
-
-    return (out_struct);
-}
-
-mnlMetropOnceOut horseshoe_gESS_draw_hierLogitMixture(vec const &y, mat const &X, vec const &beta_ini, vec const &beta_hat, mat const &rootpi, double oldll, mat const &incroot, mat const &incroot_inv, vec const &mu_ellipse, vec const &SignRes = NumericVector::create(2))
+mnlMetropOnceOut gESS_draw_hierLogitMixture_horseshoe(vec const &y, mat const &X, vec const &beta_ini, vec const &beta_hat, mat const &rootpi, double oldll, mat const &incroot, mat const &incroot_inv, vec const &mu_ellipse, vec const &SignRes = NumericVector::create(2))
 {
 
     /*
@@ -271,7 +213,7 @@ List rhierMnlRwMixture_horseshoe_gESS_rcpp_loop(List const &lgtdata, mat const &
                 // here incroot is upper triangular, different from gESS
                 incroot = chol(ucholinv * trans(ucholinv));
 
-                metropout_struct = mnlMetropOnce_con_MH_horseshoe_gESS(lgtdata_vector[lgt].y, lgtdata_vector[lgt].X, vectorise(oldbetas(lgt, span::all)), oldll[lgt], s, incroot, betabar, rootpi, SignRes);
+                metropout_struct = mnlMetropOnce_con(lgtdata_vector[lgt].y, lgtdata_vector[lgt].X, vectorise(oldbetas(lgt, span::all)), oldll[lgt], s, incroot, betabar, rootpi, SignRes);
             }
             else
             {
@@ -313,7 +255,7 @@ List rhierMnlRwMixture_horseshoe_gESS_rcpp_loop(List const &lgtdata, mat const &
 
                 // incroot_inv = chol(inv(cov_ellipse), "lower") / sqrt(lambda);
 
-                metropout_struct = horseshoe_gESS_draw_hierLogitMixture(lgtdata_vector[lgt].y, lgtdata_vector[lgt].X, vectorise(oldbetas(lgt, span::all)), betabar, rootpi, oldll[lgt], incroot, incroot_inv, mu_ellipse, SignRes);
+                metropout_struct = gESS_draw_hierLogitMixture_horseshoe(lgtdata_vector[lgt].y, lgtdata_vector[lgt].X, vectorise(oldbetas(lgt, span::all)), betabar, rootpi, oldll[lgt], incroot, incroot_inv, mu_ellipse, SignRes);
             }
 
             oldbetas(lgt, span::all) = trans(metropout_struct.betadraw);
