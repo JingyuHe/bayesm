@@ -1,22 +1,5 @@
 #include "bayesm.h"
 
-double log_likelihood_reg2(vec const &y, mat const &X, vec const &beta, double sigma2)
-{
-    // log likelihood of univariate regression y ~ Xbeta + epsilon
-    size_t n = X.n_rows;
-    double output = 0.0;
-    double mu = 0.0;
-    mat Xbeta = X * beta;
-    for (size_t i = 0; i < n; i++)
-    {
-        // loop over all data
-        // output = output - 0.5 * log(2 * M_PI) - log(sigma2) - 0.5 * pow(y(i) - Xbeta(i, 0), 2) / sigma2;
-        // ignore constants
-        output = output - 0.5 * pow(y(i) - Xbeta(i, 0), 2) / sigma2;
-    }
-    return output;
-}
-
 unireg ESS_draw_rhierLinearMixture(vec const &y, mat const &X, vec const &beta_ini, vec const &beta_hat, mat const &L, double tau)
 {
 
@@ -36,7 +19,7 @@ unireg ESS_draw_rhierLinearMixture(vec const &y, mat const &X, vec const &beta_i
     // compute the prior threshold
     double u = as_scalar(randu<vec>(1));
 
-    double priorcomp = log_likelihood_reg2(y, X, beta_ini, tau);
+    double priorcomp = log_likelihood_reg(y, X, beta_ini, tau);
 
     double ly = priorcomp + log(u); // here is log likelihood
 
@@ -48,7 +31,7 @@ unireg ESS_draw_rhierLinearMixture(vec const &y, mat const &X, vec const &beta_i
 
     double compll;
 
-    compll = log_likelihood_reg2(y, X, betaprop + beta_hat, tau);
+    compll = log_likelihood_reg(y, X, betaprop + beta_hat, tau);
 
     while (compll < ly)
     {
@@ -68,7 +51,7 @@ unireg ESS_draw_rhierLinearMixture(vec const &y, mat const &X, vec const &beta_i
 
         betaprop = beta * cos(thetaprop) + nu * sin(thetaprop);
 
-        compll = log_likelihood_reg2(y, X, betaprop + beta_hat, tau);
+        compll = log_likelihood_reg(y, X, betaprop + beta_hat, tau);
     }
 
     // accept the proposal

@@ -112,6 +112,8 @@ double trunNorm(double mu,double sig, double trunpt, int above);
 //Used in rhierLinearModel, rhierLinearMixture and rhierMnlRWMixture
 mat drawDelta(mat const& x,mat const& y,vec const& z,List const& comps,vec const& deltabar,mat const& Ad);
 
+mat ESS_drawDelta_horseshoe(mat const& x,mat const& y,vec const& z,List const& comps,vec const& deltabar,mat const& Ad);
+
 unireg runiregG(vec const& y, mat const& X, mat const& XpX, vec const& Xpy, double sigmasq, mat const& A, vec const& Abetabar, double nu, double ssq);
 
 //Used in rnegbinRW and rhierNegbinRw
@@ -174,5 +176,10 @@ mnlMetropOnceOut ESS_draw_hierLogitMixtureLogNormal(vec const &y, mat const &X, 
 mnlMetropOnceOut ESS_draw_hierLogitMixture(vec const &y, mat const &X, vec const &beta_ini, vec const &beta_hat, mat const &L, double oldll, vec const &SignRes = NumericVector::create(2));
 
 mnlMetropOnceOut gESS_draw_hierLogitMixture(vec const &y, mat const &X, vec const &beta_ini, vec const &beta_hat, mat const &rootpi, double oldll, mat const &incroot, mat const &incroot_inv, vec const &mu_ellipse, vec const &SignRes = NumericVector::create(2));
+
+double log_likelihood_reg(vec const &y, mat const &X, vec const &beta, double sigma2);
+
+// mat ESS_drawDelta_horseshoe(mat const& x,mat const& y,vec const& z,std::vector<murooti> const& comps_vector,vec const& deltabar,mat const& Ad);
+// mat ESS_drawDelta_horseshoe(mat const& x,mat const& y,vec const& z,List const& comps,vec const& deltabar,mat const& Ad);
 
 #endif

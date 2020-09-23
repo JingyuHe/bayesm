@@ -61,72 +61,123 @@
 //return(list(betadraw=betadraw,stay=stay,oldll=oldll))
 //}
 
-mnlMetropOnceOut ESS_draw_hierLogitMixture_horseshoe(vec const &y, mat const &X, vec const &beta_ini, vec const &beta_hat, mat const &L, double oldll, vec const &SignRes = NumericVector::create(2))
-{
+// mnlMetropOnceOut ESS_draw_hierLogitMixture_horseshoe(vec const &y, mat const &X, vec const &beta_ini, vec const &beta_hat, mat const &L, double oldll, vec const &SignRes = NumericVector::create(2))
+// {
 
-    /*
-    sample via elliptical slice sampler
-    Input : beta_ini, vector of initial value
-            beta_hat, mean of beta (likelihood function)
-            L, Cholesky factor (lower triangular LL' = Sigma) of covariance matrix of normal part
-  */
-    mnlMetropOnceOut out_struct;
-    // subtract mean from the initial value, sample the deviation from mean
-    vec beta = beta_ini - beta_hat;
+//     /*
+//     sample via elliptical slice sampler
+//     Input : beta_ini, vector of initial value
+//             beta_hat, mean of beta (likelihood function)
+//             L, Cholesky factor (lower triangular LL' = Sigma) of covariance matrix of normal part
+//   */
+//     mnlMetropOnceOut out_struct;
+//     // subtract mean from the initial value, sample the deviation from mean
+//     vec beta = beta_ini - beta_hat;
 
-    // draw the auxillary vector
-    vec eps = arma::randn<vec>(L.n_cols);
-    vec nu = L * eps;
+//     // draw the auxillary vector
+//     vec eps = arma::randn<vec>(L.n_cols);
+//     vec nu = L * eps;
 
-    // compute the prior threshold
-    double u = as_scalar(randu<vec>(1));
+//     // compute the prior threshold
+//     double u = as_scalar(randu<vec>(1));
 
-    double priorcomp = llmnl_con(beta_ini, y, X, SignRes);
+//     double priorcomp = llmnl_con(beta_ini, y, X, SignRes);
 
-    double ly = priorcomp + log(u); // here is log likelihood
+//     double ly = priorcomp + log(u); // here is log likelihood
 
-    // elliptical slice sampling
-    double thetaprop = as_scalar(randu<vec>(1)) * 2.0 * M_PI;
-    vec betaprop = beta * cos(thetaprop) + nu * sin(thetaprop);
-    double thetamin = thetaprop - 2.0 * M_PI;
-    double thetamax = thetaprop;
+//     // elliptical slice sampling
+//     double thetaprop = as_scalar(randu<vec>(1)) * 2.0 * M_PI;
+//     vec betaprop = beta * cos(thetaprop) + nu * sin(thetaprop);
+//     double thetamin = thetaprop - 2.0 * M_PI;
+//     double thetamax = thetaprop;
 
-    double compll;
+//     double compll;
 
-    compll = llmnl_con(betaprop + beta_hat, y, X, SignRes);
+//     compll = llmnl_con(betaprop + beta_hat, y, X, SignRes);
 
-    while (compll < ly)
-    {
-        // count ++ ;
+//     while (compll < ly)
+//     {
+//         // count ++ ;
 
-        if (thetaprop < 0)
-        {
-            thetamin = thetaprop;
-        }
-        else
-        {
-            thetamax = thetaprop;
-        }
+//         if (thetaprop < 0)
+//         {
+//             thetamin = thetaprop;
+//         }
+//         else
+//         {
+//             thetamax = thetaprop;
+//         }
 
-        // runif(thetamin, thetamax)
-        thetaprop = as_scalar(randu<vec>(1)) * (thetamax - thetamin) + thetamin;
+//         // runif(thetamin, thetamax)
+//         thetaprop = as_scalar(randu<vec>(1)) * (thetamax - thetamin) + thetamin;
 
-        betaprop = beta * cos(thetaprop) + nu * sin(thetaprop);
+//         betaprop = beta * cos(thetaprop) + nu * sin(thetaprop);
 
-        compll = llmnl_con(betaprop + beta_hat, y, X, SignRes);
+//         compll = llmnl_con(betaprop + beta_hat, y, X, SignRes);
+//     }
+
+//     // accept the proposal
+//     beta = betaprop;
+
+//     oldll = compll;
+//     // cout << "saved value " << oldll << endl;
+//     // cout << "-----" << endl;
+//     // add the mean back
+//     out_struct.betadraw = beta + beta_hat;
+//     out_struct.oldll = oldll;
+//     return out_struct;
+// }
+
+mat ESS_drawDelta_horseshoe(mat const& x,mat const& y,ivec const& z,std::vector<murooti> const& comps_vector,vec const& deltabar,mat const& Ad){
+  
+  // Wayne Taylor 2/21/2015
+  
+  // delta = vec(D)
+  //  given z and comps (z[i] gives component indicator for the ith observation, 
+  //   comps is a list of mu and rooti)
+  // y is n x p
+  // x is n x k
+  // y = xD' + U , rows of U are indep with covs Sigma_i given by z and comps
+  
+  int p = y.n_cols;
+  int k = x.n_cols;
+  int ncomp  = comps_vector.size();
+  mat xtx = zeros<mat>(k*p,k*p);
+  mat xty = zeros<mat>(p,k); //this is the unvecced version, reshaped after the sum
+  
+  //Create the index vectors, the colAll vectors are equal to span::all but with uvecs (as required by .submat)
+  uvec colAlly(p), colAllx(k);
+  for(int i = 0; i<p; i++) colAlly(i) = i;
+  for(int i = 0; i<k; i++) colAllx(i) = i;
+  
+  //Loop through the components
+  for(int compi = 0; compi<ncomp; compi++){
+    
+    //Create an index vector ind, to be used like y[ind,]
+    uvec ind = find(z == (compi+1));
+    
+    //If there are observations in this component
+    if(ind.size()>0){
+      mat yi = y.submat(ind,colAlly);
+      mat xi = x.submat(ind,colAllx);
+      
+      murooti compsi_struct = comps_vector[compi];
+      yi.each_row() -= trans(compsi_struct.mu); //the subtraction operation is repeated on each row of yi
+      mat sigi = compsi_struct.rooti*trans(compsi_struct.rooti);
+      xtx = xtx + kron(trans(xi)*xi,sigi);
+      xty = xty + (sigi * (trans(yi)*xi));
     }
-
-    // accept the proposal
-    beta = betaprop;
-
-    oldll = compll;
-    // cout << "saved value " << oldll << endl;
-    // cout << "-----" << endl;
-    // add the mean back
-    out_struct.betadraw = beta + beta_hat;
-    out_struct.oldll = oldll;
-    return out_struct;
+  }
+  xty.reshape(xty.n_rows*xty.n_cols,1);
+  
+  //vec(t(D)) ~ N(V^{-1}(xty + Ad*deltabar),V^{-1}) where V = (xtx+Ad)
+  // compute the inverse of xtx+Ad
+  mat ucholinv = solve(trimatu(chol(xtx+Ad)), eye(k*p,k*p)); //trimatu interprets the matrix as upper triangular and makes solve more efficient
+  mat Vinv = ucholinv*trans(ucholinv);
+  
+  return(Vinv*(xty+Ad*deltabar) + trans(chol(Vinv))*as<vec>(rnorm(deltabar.size())));
 }
+
 
 //MAIN FUNCTION-------------------------------------------------------------------------------------
 
@@ -263,7 +314,7 @@ List rhierMnlRwMixture_horseshoe_slice_rcpp_loop(List const &lgtdata, mat const 
                 L = trans(as<mat>(oldcomplgt[2]));
 
 
-                metropout_struct = ESS_draw_hierLogitMixture_horseshoe(lgtdata_vector[lgt].y, lgtdata_vector[lgt].X, vectorise(oldbetas(lgt, span::all)), betabar, L, oldll[lgt], SignRes);
+                metropout_struct = ESS_draw_hierLogitMixture(lgtdata_vector[lgt].y, lgtdata_vector[lgt].X, vectorise(oldbetas(lgt, span::all)), betabar, L, oldll[lgt], SignRes);
             }
 
             oldbetas(lgt, span::all) = trans(metropout_struct.betadraw);

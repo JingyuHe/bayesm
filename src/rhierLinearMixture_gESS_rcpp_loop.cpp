@@ -1,22 +1,5 @@
 #include "bayesm.h"
 
-double log_likelihood_reg3(vec const &y, mat const &X, vec const &beta, double sigma2)
-{
-    // log likelihood of univariate regression y ~ Xbeta + epsilon
-    size_t n = X.n_rows;
-    double output = 0.0;
-    double mu = 0.0;
-    mat Xbeta = X * beta;
-    for (size_t i = 0; i < n; i++)
-    {
-        // loop over all data
-        // output = output - 0.5 * log(2 * M_PI) - log(sigma2) - 0.5 * pow(y(i) - Xbeta(i, 0), 2) / sigma2;
-
-        output = output - 0.5 * pow(y(i) - Xbeta(i, 0), 2) / sigma2;
-    }
-    return output;
-}
-
 unireg gESS_draw_hierLinearMixture(vec const &y, mat const &X, vec const &beta_ini, vec const &beta_hat, double tau, mat const &incroot, mat const &incroot_inv, vec const &mu_ellipse, mat const &rootpi)
 {
 
@@ -38,7 +21,7 @@ unireg gESS_draw_hierLinearMixture(vec const &y, mat const &X, vec const &beta_i
     // compute the prior threshold
     double u = as_scalar(randu<vec>(1));
 
-    double priorcomp = log_likelihood_reg3(y, X, beta_ini, tau) + lndMvn(beta_ini, beta_hat, rootpi) - lndMvst(beta_ini, 2.0, mu_ellipse, incroot_inv, false);
+    double priorcomp = log_likelihood_reg(y, X, beta_ini, tau) + lndMvn(beta_ini, beta_hat, rootpi) - lndMvst(beta_ini, 2.0, mu_ellipse, incroot_inv, false);
 
     double ly = priorcomp + log(u); // here is log likelihood
 
@@ -50,7 +33,7 @@ unireg gESS_draw_hierLinearMixture(vec const &y, mat const &X, vec const &beta_i
 
     double compll;
 
-    compll = log_likelihood_reg3(y, X, betaprop + beta_hat, tau) + lndMvn(betaprop + beta_hat, beta_hat, rootpi) - lndMvst(betaprop + mu_ellipse, 2.0, mu_ellipse, incroot_inv, false);
+    compll = log_likelihood_reg(y, X, betaprop + beta_hat, tau) + lndMvn(betaprop + beta_hat, beta_hat, rootpi) - lndMvst(betaprop + mu_ellipse, 2.0, mu_ellipse, incroot_inv, false);
 
     while (compll < ly)
     {
@@ -70,7 +53,7 @@ unireg gESS_draw_hierLinearMixture(vec const &y, mat const &X, vec const &beta_i
 
         betaprop = beta * cos(thetaprop) + nu * sin(thetaprop);
 
-        compll = log_likelihood_reg3(y, X, betaprop + beta_hat, tau) + lndMvn(betaprop + beta_hat, beta_hat, rootpi) - lndMvst(betaprop + mu_ellipse, 2.0, mu_ellipse, incroot_inv, false);
+        compll = log_likelihood_reg(y, X, betaprop + beta_hat, tau) + lndMvn(betaprop + beta_hat, beta_hat, rootpi) - lndMvst(betaprop + mu_ellipse, 2.0, mu_ellipse, incroot_inv, false);
     }
 
     // accept the proposal

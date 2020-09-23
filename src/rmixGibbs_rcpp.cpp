@@ -13,7 +13,7 @@ List drawCompsFromLabels(mat const& y,  mat const& Bbar,
 // Function to draw the components based on the z labels
   
   vec b, r, mu;
-  mat yk, Xk, Ck, sigma, rooti, S, IW, CI, IW_chol;
+  mat yk, Xk, Ck, sigma, rooti, S, IW, CI, Sigma_chol;
   List temp, rw, comps(ncomp);
   
   int n = z.n_rows;
@@ -38,16 +38,16 @@ List drawCompsFromLabels(mat const& y,  mat const& Bbar,
       temp = rmultireg(yk, Xk, Bbar, A, nu, V);
       
       sigma = as<mat>(temp["Sigma"]); //conversion from Rcpp to Armadillo requires explict declaration of variable type using as<>
-IW_chol = chol(sigma);
-      // rooti * trans(rooti) = sigma^{-1}  !!! cholesky root of sigma Inverse
-      rooti = solve(trimatu(chol(sigma)),eye(sigma.n_rows,sigma.n_cols)); //trimatu interprets the matrix as upper triangular and makes solve more efficient
-      // cout << "sigma " << IW_chol << endl;
+Sigma_chol = chol(sigma);
+      // rooti * trans(rooti) = Sigma^{-1}  !!! cholesky root of sigma Inverse
+      // trans(Sigma_chol) * Sigma_chol = Sigma
+      rooti = solve(trimatu(Sigma_chol),eye(sigma.n_rows,sigma.n_cols)); //trimatu interprets the matrix as upper triangular and makes solve more efficient
       mu = as<vec>(temp["B"]);
 
       comps(k) = List::create(
-        Named("mu") = NumericVector(mu.begin(),mu.end()), //converts to a NumericVector, otherwise it will be interpretted as a matrix
-        Named("rooti") = rooti,
-        Named("IW_chol") = IW_chol
+        Named("mu") = NumericVector(mu.begin(),mu.end()), //converts to a NumericVector, otherwise it will be interpretted as a matrix  
+        Named("rooti") = rooti, // rooti * trans(rooti) = Sigma^{-1}
+        Named("Sigma_chol") = Sigma_chol  // trans(Sigma_chol) * Sigma_chol = Sigma 
       );
       
     } else {
@@ -59,18 +59,17 @@ IW_chol = chol(sigma);
       
       IW = as<mat>(rw["IW"]);
       CI = as<mat>(rw["CI"]);
-IW_chol = chol(IW);
-      rooti = solve(trimatu(chol(IW)),eye(IW.n_rows,IW.n_cols));        
+Sigma_chol = chol(IW);
+      rooti = solve(trimatu(Sigma_chol),eye(IW.n_rows,IW.n_cols));        
       b = vectorise(Bbar);
       r = rnorm(b.n_rows,0,1);
-      // cout << "IW " << IW_chol << endl;
       mu = b + (CI * r) / sqrt(A(0,0));
   	
 		  comps(k) = List::create(
 			  Named("mu") = NumericVector(mu.begin(),mu.end()), //converts to a NumericVector, otherwise it will be interpretted as a matrix
 
-			  Named("rooti") = rooti,
-        Named("IW_chol") = IW_chol
+			  Named("rooti") = rooti,     // rooti * trans(rooti) = Sigma^{-1}
+        Named("Sigma_chol") = Sigma_chol  // trans(Sigma_chol) * Sigma_chol = Sigma
         );
     } 
   }

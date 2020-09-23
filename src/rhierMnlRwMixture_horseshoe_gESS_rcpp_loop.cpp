@@ -1,71 +1,4 @@
 #include "bayesm.h"
-
-mnlMetropOnceOut gESS_draw_hierLogitMixture_horseshoe(vec const &y, mat const &X, vec const &beta_ini, vec const &beta_hat, mat const &rootpi, double oldll, mat const &incroot, mat const &incroot_inv, vec const &mu_ellipse, vec const &SignRes = NumericVector::create(2))
-{
-
-    /*
-    sample via generalized elliptical slice sampler
-    Input:  beta_ini, vector of the initial value
-            beta_hat, mean of the normal part
-            L, Cholesky factor (LL' = Sigma) of the normal part
-            Note that beta_hat, L are not defining the ellipse
-            mu_ellipse is the center of the ellipse
-            incroot * incroot' = covariance of the ellipse
-            incroot_inv = inv(incroot)
-    */
-   
-    mnlMetropOnceOut out_struct;
-    // subtract mean from the initial value, sample the deviation from mean
-    vec beta = beta_ini - mu_ellipse;
-
-    // draw the auxillary vector
-    vec eps = arma::randn<vec>(incroot.n_cols);
-    vec nu = incroot * eps;
-
-    // compute the prior threshold
-    double u = as_scalar(randu<vec>(1));
-
-    double priorcomp = oldll; //llmnl_con(beta_ini, y, X, SignRes);
-
-    double ly = llmnl_con(beta_ini, y, X, SignRes) + lndMvn(beta_ini, beta_hat, rootpi) - lndMvst(beta_ini, 2.0, mu_ellipse, incroot_inv, false) + log(u);
-
-    // elliptical slice sampling
-    double thetaprop = as_scalar(randu<vec>(1)) * 2.0 * M_PI;
-    vec betaprop = beta * cos(thetaprop) + nu * sin(thetaprop);
-    double thetamin = thetaprop - 2.0 * M_PI;
-    double thetamax = thetaprop;
-
-    double compll;
-
-    compll = llmnl_con(betaprop + mu_ellipse, y, X, SignRes) + lndMvn(betaprop + mu_ellipse, beta_hat, rootpi) - lndMvst(betaprop + mu_ellipse, 2.0, mu_ellipse, incroot_inv, false);
-
-    while (compll < ly)
-    {
-        if (thetaprop < 0)
-        {
-            thetamin = thetaprop;
-        }
-        else
-        {
-            thetamax = thetaprop;
-        }
-
-        thetaprop = as_scalar(randu<vec>(1)) * (thetamax - thetamin) + thetamin;
-
-        betaprop = beta * cos(thetaprop) + nu * sin(thetaprop);
-
-        compll = llmnl_con(betaprop + mu_ellipse, y, X, SignRes) + lndMvn(betaprop + mu_ellipse, beta_hat, rootpi) - lndMvst(betaprop + mu_ellipse, 2.0, mu_ellipse, incroot_inv, false);
-    }
-
-    // accept the proposal
-    beta = betaprop;
-
-    oldll = compll;
-    out_struct.betadraw = beta + beta_hat;
-    out_struct.oldll = oldll;
-    return out_struct;
-}
-
 //MAIN FUNCTION-------------------------------------------------------------------------------------
 
 //[[Rcpp::export]]
@@ -247,7 +180,7 @@ List rhierMnlRwMixture_horseshoe_gESS_rcpp_loop(List const &lgtdata, mat const &
 
                 // incroot_inv = chol(inv(cov_ellipse), "lower") / sqrt(lambda);
 
-                metropout_struct = gESS_draw_hierLogitMixture_horseshoe(lgtdata_vector[lgt].y, lgtdata_vector[lgt].X, vectorise(oldbetas(lgt, span::all)), betabar, rootpi, oldll[lgt], incroot, incroot_inv, mu_ellipse, SignRes);
+                metropout_struct = gESS_draw_hierLogitMixture(lgtdata_vector[lgt].y, lgtdata_vector[lgt].X, vectorise(oldbetas(lgt, span::all)), betabar, rootpi, oldll[lgt], incroot, incroot_inv, mu_ellipse, SignRes);
             }
 
             oldbetas(lgt, span::all) = trans(metropout_struct.betadraw);
