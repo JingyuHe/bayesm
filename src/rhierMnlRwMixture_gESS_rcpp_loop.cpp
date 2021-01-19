@@ -224,7 +224,6 @@ List rhierMnlRwMixture_gESS_rcpp_loop(List const &lgtdata, mat const &Z,
                 // temp = rootpi' * X
                 // trans(temp) * temp = X' * rootpi * rootpi' * X = X' * Sigma^{-1} * X
                 temp = vectorise(trans(rootpi) * (vectorise(oldbetas(lgt, span::all)) - mu_ellipse));
-
                 ss1 = (ss + betabar.n_elem) / 2.0;
                 ss2 = (0.5 * (ss + (trans(temp) * temp)))[0];
 
@@ -232,7 +231,6 @@ List rhierMnlRwMixture_gESS_rcpp_loop(List const &lgtdata, mat const &Z,
                 lambda = 1.0 / randg<vec>(1, distr_param(ss1, 1.0 / ss2))[0];
 
                 scale(rep, lgt) = lambda;
-
                 // cov_ellipse = inv(rootpi * trans(rootpi));
 
                 // L = inv(rootpi * trans(rootpi));
@@ -244,13 +242,12 @@ List rhierMnlRwMixture_gESS_rcpp_loop(List const &lgtdata, mat const &Z,
                 // cout << "L " << L << endl;
                 // cout << "next " << as<mat>(oldcomplgt[2]) << endl;
 
-                if(rep == 2000){
+                if(rep == 2000 || (!MH_burnin)){
                     temp1 = trans(as<mat>(oldcomplgt[2]));
                     temp2 = rootpi;
                 }
                 incroot = temp1 * sqrt(lambda);
                 incroot_inv = temp2 / sqrt(lambda);
-
                 // incroot = chol(cov_ellipse, "lower") * sqrt(lambda);
 
                 // incroot_inv = chol(inv(cov_ellipse), "lower") / sqrt(lambda);
